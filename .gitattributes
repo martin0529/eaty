@@ -1,0 +1,16 @@
+# 統一換行：repo 內一律 LF，避免 Windows / macOS 協作時整檔 diff
+* text=auto eol=lf
+
+# 二進位檔（不要做換行轉換）
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+
+# 圖片 / SQL 在 GitHub 語言統計裡的歸類
+*.sql linguist-language=SQL

@@ -1,0 +1,23 @@
+# 系統與編輯器
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# 編輯器 / IDE
+.vscode/
+.idea/
+
+# 本機開發用的臨時檔案
+*.log
+tmp/
+.cache/
+
+# 截圖 / 驗證腳本產物（不屬於網站本體）
+.motion-check/
+*.local.*
+
+# 環境變數（本專案不需要，但避免日後誤放金鑰）
+.env
+.env.*
+!.env.example

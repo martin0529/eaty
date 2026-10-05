@@ -58,6 +58,19 @@
       ? `${d.getMonth() + 1}月${d.getDate()}日`
       : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   }
+  /* AC2／AC3 的中英名稱相同（「AC2 Canteen」），主副名並排會變成連續兩次一樣的字。
+     副名跟主名相同時改用 short（AC2／AC3）；名稱本身已含短碼時就不再加前綴。 */
+  function canteenAltName(c) {
+    const zh = I18N.lang() === 'zh';
+    const main = String(zh ? c.zh : c.en || '').trim();
+    const alt = String(zh ? c.en || '' : c.zh).trim();
+    return alt.toLowerCase() === main.toLowerCase() ? c.short : alt;
+  }
+  function canteenFullName(c) {
+    const name = String((I18N.lang() === 'zh' ? c.zh : c.en) || '').trim();
+    const short = String(c.short || '').toUpperCase();
+    return short && name.toUpperCase().startsWith(short) ? name : `${c.short} ${name}`;
+  }
 
   /* ── 動效工具 ───────────────────────────── */
 
@@ -261,7 +274,7 @@
          </button>`
       : '';
     const kicker = c
-      ? esc(I18N.lang() === 'zh' ? `${c.short} ${c.zh}・今日主打` : `${c.short} ${c.en} · Today's pick`)
+      ? esc(I18N.lang() === 'zh' ? `${canteenFullName(c)}・今日主打` : `${canteenFullName(c)} · Today's pick`)
       : esc(I18N.t('heroKicker'));
     return { hd, c, kicker, dishLink, stamp };
   }
@@ -324,7 +337,7 @@
           <span class="chip"><i class="dot"></i>${esc(c.short)}${I18N.lang() === 'zh' ? ` · ${esc(c.bldgZh)}` : ` · ${esc(c.bldgEn)}`}</span>
           <span class="canteen-card-name">
             <h3>${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</h3>
-            <span>${esc(I18N.lang() === 'zh' ? c.en : c.zh)}</span>
+            <span>${esc(canteenAltName(c))}</span>
           </span>
           <span class="canteen-card-meta">
             <span class="row">${icon('clock')}${esc(I18N.lang() === 'zh' ? c.hoursZh : c.hoursEn)}</span>
@@ -664,7 +677,7 @@ ${mealBar}
             <span class="price-tag"><span class="p">${fmtPrice(d.price)}</span></span>
           </figure>
           <div class="dish-modal-info">
-            <span class="chip dish-modal-canteen canteen-${c.color}"><i class="dot"></i>${esc(c.short)} ${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</span>
+            <span class="chip dish-modal-canteen canteen-${c.color}"><i class="dot"></i>${esc(canteenFullName(c))}</span>
             <div>
               <h2 class="dish-modal-name">${esc(I18N.pick(d))}</h2>
               <p class="dish-modal-en">${esc(I18N.lang() === 'zh' ? d.en : d.zh)}</p>

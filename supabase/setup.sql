@@ -6,10 +6,12 @@
 --       填入 js/config.js 的 SUPABASE_URL / SUPABASE_ANON_KEY。
 -- 可重複執行（全部 create if not exists / upsert），跑幾次都安全。
 --
--- 本檔＝三部分：
+-- 本檔＝四部分：
 --   Part 1  菜單表結構（canteens / dishes）＋ RLS ＋ GRANT
 --   Part 2  菜單種子資料（categories / canteens / dishes）
 --   Part 3  評論表結構（reviews）＋ RLS ＋ GRANT
+--   Part 4  v0.6.0：餐段欄位（categories.meal）＋ 抽籤黑名單（roll_blacklist）
+--           （＝ supabase/v0.6.0-meal-and-blacklist.sql 的內容，兩邊保持一致）
 -- ═══════════════════════════════════════════════════════════
 
 
@@ -326,3 +328,78 @@ grant select, insert on table public.reviews to anon, authenticated;
 -- 注意：為咗令同學免登入都可以留言，呢度冇鎖 update/delete。
 -- RLS 預設唔會比 anon update/delete，所以已經夠安全；
 -- 唔想俾人洗版嘅話，可以日後加 rate limit 或者轉做要登入。
+
+
+-- ═══ Part 4／4 — v0.6.0：餐段（早餐／午餐／晚餐）＋ 抽籤黑名單 ═══
+-- 內容與 supabase/v0.6.0-meal-and-blacklist.sql 相同；改其中一份請兩邊同步。
+
+-- ── ① categories.meal：餐段 ──
+-- 逗號分隔的 breakfast / lunch / dinner（可用中文別名 早餐／午餐／晚餐，all = 三餐）。
+-- 留空（NULL）＝不分餐：只在「全部」看得到，早餐／午餐／晚餐都不會出現。
+alter table public.categories add column if not exists meal text;
+
+comment on column public.categories.meal is
+  '餐段：逗號分隔的 breakfast / lunch / dinner；留空＝不分餐（只在「全部」顯示）';
+
+update public.categories c
+set meal = m.meal
+from (values
+  ('中式早點',      'breakfast'),
+  ('西多士',        'breakfast'),
+  ('飲品',          'breakfast,lunch,dinner'),
+  ('特色飲品',      'breakfast,lunch,dinner'),
+  ('Coffee Lounge', 'breakfast,lunch,dinner'),
+  -- AC2／AC3 的通用「飲品甜品」不算早餐：那兩間食堂目前完全沒有早餐資料
+  ('drinks',        'lunch,dinner'),
+  ('開學優惠',      'lunch,dinner'),
+  ('肉燥拌麵',      'lunch,dinner'),
+  ('台式湯麵',      'lunch,dinner'),
+  ('酸辣米線',      'lunch,dinner'),
+  ('泰惹味精選',    'lunch,dinner'),
+  ('泰式湯粉',      'lunch,dinner'),
+  ('明爐燒味',      'lunch,dinner'),
+  ('燒味推介',      'lunch,dinner'),
+  ('燒味精選',      'lunch,dinner'),
+  ('城堡炸雞',      'lunch,dinner'),
+  ('披薩',          'lunch,dinner'),
+  ('特價燒味飯',    'lunch,dinner'),
+  ('豬扒包餐',      'lunch,dinner'),
+  ('雞髀餐',        'lunch,dinner'),
+  ('街頭碗仔羹',    'lunch,dinner'),
+  ('單售食品',      'lunch,dinner'),
+  ('rice',          'lunch,dinner'),
+  ('noodle',        'lunch,dinner'),
+  ('asian',         'lunch,dinner'),
+  ('snack',         'lunch,dinner'),
+  ('japanese',      'lunch,dinner'),
+  ('western',       'lunch,dinner')
+) as m(id, meal)
+where c.id = m.id and c.meal is null;   -- 只補未設定；想整批重設先 set meal = null
+
+-- ── ② roll_blacklist：抽籤黑名單（網站只讀，加／刪一行即時生效）──
+create table if not exists public.roll_blacklist (
+  kind       text not null check (kind in ('dish', 'category')),
+  value      text not null,
+  note       text,
+  created_at timestamptz not null default now(),
+  primary key (kind, value)
+);
+
+comment on table public.roll_blacklist is
+  '「今天吃什麼」抽籤黑名單。kind=category 填 categories.id；kind=dish 填 dishes.id。';
+
+alter table public.roll_blacklist enable row level security;
+
+drop policy if exists "roll_blacklist is public readable" on public.roll_blacklist;
+create policy "roll_blacklist is public readable"
+  on public.roll_blacklist for select to anon, authenticated using (true);
+
+grant select on table public.roll_blacklist to anon, authenticated;
+
+insert into public.roll_blacklist (kind, value, note) values
+  ('category', 'drinks',        '飲品甜品（AC2／AC3）——不是一餐的答案'),
+  ('category', '飲品',          'AC1 熱／凍飲料'),
+  ('category', '特色飲品',      'AC1 汽泡茶／梳打'),
+  ('category', 'Coffee Lounge', 'AC1 咖啡角（29 款咖啡）'),
+  ('category', '其他',          '環保餐盒／餐具，非食品')
+on conflict (kind, value) do nothing;

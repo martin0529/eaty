@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   Eaty — 「新鮮白盒」設計系統 v0.5.7（動效強化版）
+   Eaty — 「新鮮白盒」設計系統 v0.5.8（動效強化版）
    純白空間 × 墨黑有機色塊 × 大圓形俯拍美食攝影 × 茄紅點睛
 
    動效設計原則
@@ -197,10 +197,29 @@ button.chip:active{transform:scale(.94)}
 .header-link:hover{color:var(--ink)}
 .header-link:hover::after{transform:scaleX(1)}
 .header-actions{margin-left:auto;display:flex;align-items:center;gap:14px}
-.lang-btn{font:700 12.5px/1 var(--disp);border:1.5px solid var(--line);border-radius:999px;padding:10px 14px;min-height:40px;display:inline-flex;align-items:center;transition:border-color var(--dur-2) var(--ease),transform var(--dur-1) var(--ease)}
-.lang-btn:hover{border-color:var(--ink)}
+/* 頁首動作鈕是一對：語言切換 + 「今天吃什麼」。
+   兩顆必須同形同高，否則並排時一眼就看出歪 —— 原本語言鈕是 padding:10px 14px
+   撐出來的 46×40 橢圓（還只有一條 #EBEAE5 細邊，幾乎隱形），
+   旁邊的紅鈕是 42×44 的另一種橢圓，一大一小、一虛一實，湊成一對畸形。
+   改成兩顆都是固定 44×44 的正圓，只用「淡灰底 vs 茄紅底」分主次。 */
+.lang-btn{
+  width:44px;height:44px;flex:none;border-radius:50%;
+  background:var(--tile);color:var(--ink);
+  font:700 12.5px/1 var(--disp);letter-spacing:.02em;
+  display:inline-flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+  transition:background var(--dur-2) var(--ease),transform var(--dur-1) var(--ease);
+}
+.lang-btn:hover{background:var(--line)}
 .lang-btn:active{transform:scale(.94)}
 .lang-btn.is-flip{animation:langFlip var(--dur-4) var(--ease)}
+/* 紅鈕本體只有 44px，再用 0 16px 30px 的大黑影會在半徑 22px 的形狀下
+   糊成一圈髒灰；縮一號並帶紅調，讀起來是「浮起」而不是「弄髒」。
+   （手機上連這一圈都關掉，見 max-width:480px 段。） */
+.btn-random-header{box-shadow:0 10px 20px -10px rgba(206,47,31,.45)}
+.btn-random-header:hover{box-shadow:0 14px 24px -12px rgba(206,47,31,.5)}
+/* 跟語言鈕同一種按壓回饋，兩顆手感才會一致（語言鈕自己的 scale 在上面） */
+.header-actions .btn:active:not([disabled]){transform:translateY(0) scale(.94)}
 
 /* ── hero ── */
 .hero{position:relative;overflow:hidden;min-height:640px;display:flex;align-items:center;background:var(--bg)}
@@ -453,6 +472,34 @@ button.chip:active{transform:scale(.94)}
 .sort-box select{font:700 12.5px/1 var(--disp);color:var(--ink);border:1.5px solid var(--line);border-radius:999px;padding:9px 13px;background:#fff;-webkit-appearance:none;appearance:none;transition:border-color var(--dur-2) var(--ease)}
 .sort-box select:hover{border-color:#C9C7C0}
 
+/* ── 餐段（早餐／午餐／晚餐）──
+   食堂頁最上層的切換。刻意做成「底線式 tab」而不是膠囊 chip：
+   餐段＝大字＋紅底線（上層），菜品種類＝膠囊 chip（下層），一眼看出誰管誰。
+   底線用 transform:scaleX() 進出，只動 transform，reduced-motion 時可被全域中和。
+   第一顆的 padding 歸零，字緣才跟下面 chips 的 64px 內距對齊。
+   ⚠️ .meal-bar 是 .filter-bar 的「兄弟」，不是它的子元素 —— 所以它跟著頁面捲走，
+   只留下 chips＋排序那條黏頂列（手機上黏頂區維持 ~174px／844px，不會吃掉三成螢幕）。 */
+.meal-bar{padding:14px 64px 12px}
+.meal-tabs{display:flex;gap:2px;border-bottom:1.5px solid var(--line)}
+.meal-tab{
+  position:relative;display:inline-flex;align-items:center;min-height:40px;padding:0 15px;
+  font:700 14px/1 var(--disp);letter-spacing:.02em;color:var(--meta);
+  -webkit-tap-highlight-color:transparent;
+  transition:color var(--dur-2) var(--ease);
+}
+.meal-tab::after{
+  content:"";position:absolute;left:15px;right:15px;bottom:-1.5px;height:2.5px;border-radius:2px;
+  background:var(--red);transform:scaleX(0);
+  transition:transform var(--dur-3) var(--ease-back);
+}
+.meal-tab:first-child{padding-left:0}
+.meal-tab:first-child::after{left:0}
+.meal-tab:hover{color:var(--ink-soft)}
+.meal-tab.is-on{color:var(--ink)}
+.meal-tab.is-on::after{transform:scaleX(1)}
+.meal-tab:active{transform:scale(.96)}
+.meal-tab.is-pop{animation:chipPop var(--dur-3) var(--ease-back)}
+
 /* 分類組 */
 .cat-group{margin-bottom:44px}
 .cat-head{display:flex;align-items:baseline;gap:10px;font:900 20px/1.3 var(--sans);margin-bottom:18px}
@@ -652,6 +699,9 @@ button.chip:active{transform:scale(.94)}
 .random-dish.landed .random-flip{animation:land 620ms var(--ease-back) both}
 .stamp-slam{animation:slam 520ms var(--ease-back) both}
 .random-result-actions{display:flex;justify-content:center;margin-top:14px;animation:riseIn var(--dur-4) var(--ease-out) both}
+/* 可抽道數：黑名單一改，這裡的數字就跟著變 —— 是「黑名單有沒有吃到」最直接的證明 */
+.random-pool{font:600 12px/1 var(--disp);letter-spacing:.02em;color:var(--meta);margin:-9px 0 14px}
+.random-pool.is-empty{color:var(--red-deep);font-weight:700}
 .btn-random.is-rolling .icn{animation:diceSpin 700ms linear infinite}
 
 /* ── reveal ── */
@@ -717,6 +767,7 @@ button.chip:active{transform:scale(.94)}
 @media (max-width:1180px){
   .wrap{padding:0 40px}
   .filter-bar-row{padding:12px 40px}
+  .meal-bar{padding:12px 40px 11px}
   .bowl{width:440px;height:440px;top:96px;right:12px}
   .chili-1{right:640px}
   .sp-1{right:520px}
@@ -734,10 +785,30 @@ button.chip:active{transform:scale(.94)}
   .header-nav{display:none}
 }
 @media (max-width:760px){
+  /* 手機不需要桌機的 72px：頁首內最高的元素是 44px 的按鈕，60px 仍有 8px 呼吸。
+     省下來的 12px 正好補回篩選列改成兩行後增加的高度。 */
+  :root{--header-h:60px}
   .wrap{padding:0 22px}
-  .filter-bar-row{padding:11px 22px}
+  /* 篩選列改為兩行：分類 chip 獨佔整行，排序移到第二行右對齊。
+     原本單行時 chip 只分到 192px 滑動區（23 顆裡 21 顆在畫面外），
+     而且 chip 高度只有 28px，遠低於可觸控的 44px。 */
+  /* 餐段 tab 在這一行平均分掉整個寬度：360px 螢幕扣掉 44px 內距還有 316px，
+     四顆各 79px（「早餐」兩字 13.5px 只佔 27px）—— 不必橫向滑就全部按得到，
+     而且高度撐到 44px。 */
+  .meal-bar{padding:9px 22px 10px}
+  .meal-tab{flex:1;justify-content:center;min-height:44px;padding:0 6px;font-size:13.5px}
+  .meal-tab:first-child{padding-left:6px}
+  .meal-tab::after{left:8px;right:8px}
+  .meal-tab:first-child::after{left:8px}
+  .filter-bar-row{flex-wrap:wrap;gap:7px;padding:8px 22px 9px}
+  .chips{flex:1 1 100%;order:1;gap:9px;padding:2px 0;overscroll-behavior-x:contain;scroll-snap-type:x proximity}
+  #chip-strip .chip{min-height:44px;padding:0 16px;font:700 13.5px/1 var(--disp);scroll-snap-align:start}
+  #chip-strip .chip i{font:600 12px/1 var(--disp)}
   /* 手機是觸控，橫向滑本來就順；再放兩顆箭頭會吃掉 82px 的 390px 螢幕 */
   .chips-nav{display:none}
+  .sort-box{flex:1 1 100%;order:2;justify-content:flex-end;gap:8px}
+  /* 16px：iOS 對小於 16px 的表單控制會在聚焦時自動放大整個頁面 */
+  .sort-box select{min-height:40px;padding:0 14px;font:700 16px/1 var(--disp)}
   .section{padding:64px 0 56px}
   .section-head{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:28px}
   .hero{min-height:0;display:block;padding:8px 0 44px}
@@ -747,6 +818,10 @@ button.chip:active{transform:scale(.94)}
   .hero-title{font-size:42px}
   .hero-actions{flex-direction:column;align-items:stretch}
   .hero-actions .btn{width:100%}
+  /* 手機上兩顆全寬按鈕上下疊，中間只隔 14px。原本 0 16px 30px 的黑影剛好灌滿
+     那條縫（量到最暗 201/255），在純白頁面上讀起來像一條污漬，也讓紅鈕看起來
+     比白鈕「大一號」。縮小並改帶紅調後縫回到 238 左右，跟頁首紅鈕同一種語言。 */
+  .hero-actions .btn-ink,.hero-actions .btn-ink:hover{box-shadow:0 10px 20px -10px rgba(206,47,31,.45)}
   .hero-note{max-width:74%}
   .hero-art{min-height:0;height:auto}
   .bowl{position:relative;top:auto;right:auto;left:auto;margin:30px auto 0;width:300px;height:300px;animation:none}
@@ -790,9 +865,16 @@ button.chip:active{transform:scale(.94)}
 @media (max-width:480px){
   .hero-title{font-size:36px}
   .header-row{gap:14px}
+  .header-actions{gap:10px}
   .masthead{font-size:19px}
+  /* 手機頁首只剩這兩顆，統一成 44px 正圓：
+     原本紅鈕 padding:12px 讓它量到 42×44，跟左邊 46×40 的語言鈕是「兩種不同方向的橢圓」。
+     現在兩顆同為 44×44，連紅色那圈陰影也一併關掉 —— 兩顆都是平貼的白／灰／紅圓，
+     才真的像一組；只留顏色分主次。 */
+  .btn-random-header,.btn-random-header:hover{box-shadow:none}
+  .btn-random-header{width:44px;height:44px;padding:0;gap:0}
   .btn-random-header span{display:none}
-  .btn-random-header{padding:12px}
+  .btn-random-header .icn{width:18px;height:18px}
   .modal-close:hover{transform:none}
 }
 

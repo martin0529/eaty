@@ -6,13 +6,20 @@
  *   supabase-setup.sql，然後把下面 SUPABASE_URL 和 SUPABASE_ANON_KEY 填上。
  */
 window.CITYU_EATS_CONFIG = {
-  VERSION: '0.5.7',
+  VERSION: '0.6.0',
 
   // Supabase project: Eaty (2026-10-04 由舊專案 Cityu canteen comment website 遷移)
   SUPABASE_URL: 'https://adnownneldfalplbdhvd.supabase.co',
   // publishable key — 公開金鑰，安全性由 RLS 政策保障
   SUPABASE_ANON_KEY: 'sb_publishable_CxKEG57uh9UR3f6QEGLI0Q__9Q7I46N',
   SUPABASE_TABLE: 'reviews',
+
+  // 「今天吃什麼」抽籤黑名單表（只讀）。
+  // 在 Supabase → Table Editor 加一行即時生效，毋須改程式：
+  //   kind='category' → value 填 categories.id（飲品、Coffee Lounge…）
+  //   kind='dish'     → value 填 dishes.id（ac1-pepperoni…）
+  // 表未建立／讀不到時，會退回 js/menu-data.js 的內建黑名單。
+  SUPABASE_ROLL_TABLE: 'roll_blacklist',
 
   // true = 全站永久隱藏種子範例評論（連頁尾的切換鈕一起收起來）。
   // 目前站上只放真實評論；Supabase reviews 表目前是空的，

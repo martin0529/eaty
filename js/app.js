@@ -34,6 +34,15 @@
   const canteenById = (id) => DATA.canteens.find((c) => c.id === id);
   const catById = (id) => DATA.categories.find((c) => c.id === id) || { zh: id, en: id };
 
+  /* ── 餐段（meal）──────────────────────────
+   * categories[].meal 已在 menu-data.js 解析成陣列（例如 ['lunch','dinner']）。
+   * 空陣列 ＝ 不分餐 —— 只在「全日」出現，早餐／午餐／晚餐都不算它。
+   * （例：其他 → 環保餐盒，$1 一件，不是一餐的菜。）
+   */
+  const MEALS = ['breakfast', 'lunch', 'dinner'];
+  const MEAL_KEY = { breakfast: 'mealBreakfast', lunch: 'mealLunch', dinner: 'mealDinner' };
+  const catInMeal = (cat, meal) => !meal || (Array.isArray(cat.meal) && cat.meal.indexOf(meal) >= 0);
+
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -424,7 +433,8 @@
   /* ── 畫面：飯堂頁 ────────────────────────── */
 
   function getFilter(canteenId) {
-    if (!state.filters[canteenId]) state.filters[canteenId] = { cat: null, sort: 'popular' };
+    // meal: '' = 全日（不按餐段篩選）／'breakfast' | 'lunch' | 'dinner'
+    if (!state.filters[canteenId]) state.filters[canteenId] = { meal: '', cat: null, sort: 'popular' };
     return state.filters[canteenId];
   }
 
@@ -436,11 +446,27 @@
     // 否則點完右邊的分類、整列就跳回起點，那個分類馬上又不見了。
     if (chipScopeKey !== canteenId) { chipScopeKey = canteenId; chipScrollLeft = 0; }
     const f = getFilter(canteenId);
-    let dishes = DATA.dishes.filter((d) => d.canteenId === canteenId);
-    const ratedAll = dishes.filter((d) => state.stats[d.id]);
+    const allDishes = DATA.dishes.filter((d) => d.canteenId === canteenId);
+    const ratedAll = allDishes.filter((d) => state.stats[d.id]);
     const bandAvg = ratedAll.length ? ratedAll.reduce((s2, d) => s2 + state.stats[d.id].avg, 0) / ratedAll.length : 0;
-    const totalReviews = dishes.reduce((n, d) => n + (state.stats[d.id] ? state.stats[d.id].count : 0), 0);
-    if (f.cat) dishes = dishes.filter((d) => d.cat === f.cat);
+    const totalReviews = allDishes.reduce((n, d) => n + (state.stats[d.id] ? state.stats[d.id].count : 0), 0);
+
+    /* 餐段列（分類 chips 的上層）：
+       只列這個食堂真的吃得到的餐段 —— 要有分類、分類要掛在這個餐段、而且真的有菜。
+       AC2／AC3 目前沒有任何掛早餐的分類，那就乾脆不顯示「早餐」這顆 tab，
+       而不是給一顆按下去空空如也的死按鈕。 */
+    const meals = MEALS.filter((m) => DATA.categories.some((cat) => catInMeal(cat, m) && allDishes.some((d) => d.cat === cat.id)));
+    if (f.meal && meals.indexOf(f.meal) < 0) f.meal = '';   // 換了食堂或雲端改了餐段 → 退回全日
+
+    // 這一餐看得到的分類。「全日」＝不排除任何分類（連沒掛餐段的「其他」都照收）。
+    const mealCats = DATA.categories.filter((cat) => catInMeal(cat, f.meal));
+    if (f.cat && !mealCats.some((cat) => cat.id === f.cat)) f.cat = null;
+    const mealCatIds = new Set(mealCats.map((cat) => cat.id));
+
+    // 這個餐段的全部菜。「全日」＝完全不動菜單（連 category 掛不上任何分類的菜都留著），
+    // 維持改動前的行為。
+    const mealDishes = f.meal ? allDishes.filter((d) => mealCatIds.has(d.cat)) : allDishes.slice();
+    let dishes = f.cat ? mealDishes.filter((d) => d.cat === f.cat) : mealDishes;
 
     const stat = (d) => state.stats[d.id] || { count: 0, avg: 0 };
     if (f.sort === 'popular') dishes.sort((a, b) => stat(b).count - stat(a).count || stat(b).avg - stat(a).avg);
@@ -448,9 +474,10 @@
     else if (f.sort === 'price') dishes.sort((a, b) => a.price - b.price);
 
     const chips = [{ id: null, zh: I18N.t('filterAll'), en: I18N.t('filterAll') }]
-      .concat(DATA.categories)
+      .concat(mealCats)
       .map((cat) => {
-        const n = DATA.dishes.filter((d) => d.canteenId === canteenId && (!cat.id || d.cat === cat.id)).length;
+        // 數字要跟著餐段走：早餐的「全部」是 56 道，不是整間食堂的 109 道
+        const n = cat.id ? mealDishes.filter((d) => d.cat === cat.id).length : mealDishes.length;
         if (cat.id && !n) return '';
         return `
           <button class="chip ${f.cat === cat.id ? 'chip-on' : ''}" data-action="set-cat" data-id="${cat.id || ''}">
@@ -474,7 +501,7 @@
       gridHtml = `<div class="dish-grid${enterCls}">${dishes.map((d, i) => dishCard(d, enter ? clamp(i, 0, 9) : undefined)).join('')}</div>`;
     } else {
       let seen = 0;
-      gridHtml = DATA.categories.map((cat) => {
+      gridHtml = mealCats.map((cat) => {
         const list = dishes.filter((d) => d.cat === cat.id);
         if (!list.length) return '';
         const base = seen;
@@ -486,6 +513,17 @@
           </div>`;
       }).join('');
     }
+
+    /* 餐段 tab：做成底線式（大字、黑、紅底線），跟下面膠囊狀的分類 chip 拉開層級，
+       一眼看得出「餐段在上、菜品種類在下」。沒有可選餐段時整條不輸出。 */
+    const mealBar = meals.length ? `
+      <div class="wrap meal-bar">
+        <div class="meal-tabs" role="tablist" aria-label="${esc(I18N.t('mealLabel'))}">
+          ${[{ id: '', key: 'mealAll' }].concat(meals.map((m) => ({ id: m, key: MEAL_KEY[m] })))
+            .map((t) => `<button class="meal-tab${f.meal === t.id ? ' is-on' : ''}" role="tab" aria-selected="${f.meal === t.id ? 'true' : 'false'}" data-action="set-meal" data-id="${t.id}">${esc(I18N.t(t.key))}</button>`)
+            .join('')}
+        </div>
+      </div>` : '';
 
     // 注意下方菜品列表：.wrap 一定要寫成 .section 的「子元素」。
     // 兩者疊在同一顆上時，.section{padding:96px 0 88px} 的 padding 簡寫
@@ -507,13 +545,13 @@
               <div class="canteen-stats">
                 ${ratedAll.length ? `<span class="big">${bandAvg.toFixed(1)}<small>★</small></span>` : ''}
                 ${totalReviews ? `<span class="rating-line"><span class="count">${reviewCountText(totalReviews)}</span></span>` : ''}
-                <span class="chip">${dishes.length} ${esc(I18N.t('dishesCount'))}</span>
+                <span class="chip">${allDishes.length} ${esc(I18N.t('dishesCount'))}</span>
               </div>
             </div>
           </div>
         </section>
       </div>
-
+${mealBar}
       <div class="filter-bar">
         <div class="wrap filter-bar-row">
           <div class="chips" id="chip-strip">${chips}</div>
@@ -749,11 +787,38 @@
   let rollToken = 0;
 
   /**
-   * 不進「今天吃什麼」抽籤池的分類。
-   * 飲品／甜品不是一餐的答案——抽到「凍檸茶」對「今天吃什麼」毫無幫助。
-   * 只影響抽籤，不影響飯堂頁的分類瀏覽（那裡照樣看得到飲品）。
+   * 抽籤池 ＝ 全部菜品 − 黑名單。
+   *
+   * 黑名單來自雲端 roll_blacklist 表（前端只讀），在 Supabase → Table Editor
+   * 加一行就即時生效，毋須改程式：
+   *   kind = 'category' → value 填分類 id（飲品、Coffee Lounge…）
+   *   kind = 'dish'     → value 填菜品 id（ac1-pepperoni、ac2-claypot…）
+   * 讀不到雲端表（離線／表未建立）時，用 menu-data.js 的內建清單後備。
+   *
+   * 飲品甜品不是一餐的答案——抽到「凍檸茶」對「今天吃什麼」毫無幫助，
+   * 所以預設就把它們排在黑名單裡。只影響抽籤，不影響食堂頁的分類瀏覽。
    */
-  const ROLL_EXCLUDED_CATS = ['drinks'];
+  function rollBlacklist() {
+    const m = window.CityuEatsMenu;
+    return (m && m.rollBlacklist) || { dishes: new Set(), categories: new Set() };
+  }
+  function rollPool(scopeId) {
+    const bl = rollBlacklist();
+    return DATA.dishes.filter((d) => (!scopeId || d.canteenId === scopeId)
+      && !bl.categories.has(d.cat) && !bl.dishes.has(d.id));
+  }
+
+  /** 把「可抽 N 道菜」寫進 modal；池是空的時候直接鎖住按鈕，免得按下去毫無反應。 */
+  function syncRollPool() {
+    const el = document.getElementById('random-pool');
+    if (!el) return;
+    const scope = modalRoot.querySelector('.random-scopes .chip-on');
+    const n = rollPool(scope ? scope.getAttribute('data-id') : '').length;
+    el.textContent = n ? I18N.t('randomPool').replace('{n}', n) : I18N.t('randomPoolEmpty');
+    el.classList.toggle('is-empty', !n);
+    const btn = document.getElementById('roll-btn');
+    if (btn) btn.disabled = !n;
+  }
 
   function openRandom() {
     modalToken++;
@@ -776,10 +841,12 @@
           </div>
           <span class="random-stamp-slot" id="random-stamp"></span>
         </div>
+        <p class="random-pool" id="random-pool" aria-live="polite"></p>
         <button class="btn btn-ink btn-random" data-action="roll" id="roll-btn">${icon('dice')}<span id="roll-label">${esc(I18N.t('randomRoll'))}</span></button>
         <div class="random-result-actions" id="random-actions"></div>
       </div>`;
     document.body.classList.add('modal-open');
+    syncRollPool();                    // 先算這個範圍有幾道菜可抽（順便證明黑名單有吃到）
     const closeBtn = modalRoot.querySelector('.modal-close');
     if (closeBtn) closeBtn.focus();
   }
@@ -796,8 +863,8 @@
 
     const scope = modalRoot.querySelector('.random-scopes .chip-on');
     const scopeId = scope ? scope.getAttribute('data-id') : '';
-    const pool = DATA.dishes.filter((d) => !ROLL_EXCLUDED_CATS.includes(d.cat) && (!scopeId || d.canteenId === scopeId));
-    if (!pool.length) return;
+    const pool = rollPool(scopeId);
+    if (!pool.length) return;      // 池被黑名單排除光了——按鈕早已鎖住，這裡只是保險
 
     const animated = !reduceMotion();
     const token = ++rollToken;
@@ -854,6 +921,9 @@
   let observer = null;
   let revealToken = 0;
   const revealTimers = new Map();
+  let armedEls = [];      // 仍等待揭示的元素
+  let rescueAt = 0;       // 補漏掃描的節流時間戳
+  let arriveRef = null;   // 目前這一批的 arrive，供補漏呼叫
 
   /**
    * 揭示完成後卸下 armed/in。
@@ -875,6 +945,48 @@
     revealTimers.set(el, setTimeout(() => settleReveal(el), delayMs + 1250));
   }
 
+  /**
+   * 保險網：把「已經越過揭示線、卻仍未 in」的元素直接補揭示。
+   *
+   * 為什麼需要它：IntersectionObserver 的 rootMargin 用百分比、由瀏覽器活體重算，
+   * 理論上自己就會回呼。但實測在手機上會漏——快速滑動、網址列收合（innerHeight 變動）、
+   * 圖片載入造成的版面位移，都可能讓元素「進入即靜止」，IO 不再回呼。
+   * 加了這道掃描後，「卡片卡在 opacity:0」在結構上不可能發生。
+   */
+  function rescueStuck() {
+    if (!armedEls.length || !arriveRef) return;
+    const line = window.innerHeight;
+    const late = [];
+    armedEls = armedEls.filter((el) => {
+      if (!el.isConnected || el.classList.contains('in')) return false;
+      if (el.getBoundingClientRect().top < line) { late.push(el); return false; }
+      return true;
+    });
+    if (late.length) arriveRef(late);
+  }
+
+  /* 捲動事件每幀都會呼叫，這裡自己節流，避免逐格量測造成 layout thrashing。
+     ⚠️ 一定要補尾端那次：捲動停止時若剛好被節流吞掉，就再也沒有捲動事件
+     可以觸發補漏，元素會一直卡在 opacity:0 —— 這正是「要往回滑才出現」的成因。 */
+  let rescueTimer = 0;
+
+  function maybeRescue() {
+    if (!armedEls.length) return;
+    const now = performance.now();
+    const wait = 120 - (now - rescueAt);
+    if (wait <= 0) {
+      rescueAt = now;
+      rescueStuck();
+      return;
+    }
+    if (rescueTimer) return;
+    rescueTimer = setTimeout(() => {
+      rescueTimer = 0;
+      rescueAt = performance.now();
+      rescueStuck();
+    }, wait);
+  }
+
   function bindReveals() {
     const token = ++revealToken;
     const els = Array.from(appEl.querySelectorAll('.reveal'));
@@ -883,15 +995,21 @@
     revealTimers.clear();
 
     if (reduceMotion() || !('IntersectionObserver' in window)) {
+      armedEls = [];
       els.forEach(settleReveal);
       return;
     }
     if (observer) observer.disconnect();
 
-    const effBottom = window.innerHeight * 0.92;
+    /* 揭示線＝視窗底緣。
+       原本是 innerHeight*0.92（rootMargin 底部 -8%），但那會在畫面底部留一條
+       死區：卡片已經看得見、卻因為還沒越過那 8% 而維持 opacity:0。
+       使用者若剛好停在該位置，就會看到一條空白，要再滑一下才補上——
+       這正是回報的「滑了卻沒載入」。現已取消死區，凡是進入視口的都會揭示。 */
+    const revealLine = () => window.innerHeight;
     const inRange = (el) => {
       const r = el.getBoundingClientRect();
-      return r.top < effBottom && r.bottom > 0;
+      return r.top < revealLine() && r.bottom > 0;
     };
 
     /**
@@ -910,36 +1028,41 @@
         group.forEach((el, idx) => {
           revealNow(el, group.length > 1 ? clamp(idx, 0, 8) * 70 : 0);
           if (observer) observer.unobserve(el);
+          const i = armedEls.indexOf(el);
+          if (i >= 0) armedEls.splice(i, 1);
         });
       });
     };
+    arriveRef = arrive;
 
-    const pending = [];
+    /* IO 的 root 就是視窗本身，與上面的揭示線一致；不再另外用 inRange 二次把關
+       （雙重條件邊界不一致，正是先前卡片卡住的來源）。
+       threshold 用 0：只要有一點交集就回呼。 */
     observer = new IntersectionObserver((entries) => {
       const incoming = [];
       for (const en of entries) {
-        if (en.isIntersecting && inRange(en.target)) incoming.push(en.target);
+        if (en.isIntersecting) incoming.push(en.target);
       }
       if (incoming.length) arrive(incoming);
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+    }, { rootMargin: '0px', threshold: 0 });
 
+    armedEls = [];
     els.forEach((el) => {
       if (inRange(el)) {
         el.classList.add('in'); // 首屏可見的內容永不隱藏
       } else {
         el.classList.add('reveal-armed');
-        pending.push(el);
+        armedEls.push(el);
         observer.observe(el);
       }
     });
 
-    // 字體交換會令版面位移把元素帶入視口；IO 不一定重估，定時補漏
-    setTimeout(() => {
-      if (token !== revealToken) return;
-      const late = pending.filter((el) =>
-        el.classList.contains('reveal-armed') && !el.classList.contains('in') && inRange(el));
-      if (late.length) arrive(late);
-    }, 1400);
+    // 字體交換／雲端資料後版面位移會把元素帶入視口而未必有捲動事件，補掃幾次
+    [500, 1400, 2800].forEach((ms) => {
+      setTimeout(() => {
+        if (token === revealToken) rescueStuck();
+      }, ms);
+    });
   }
 
   /* ── 捲動狀態（頁首陰影 / 閱讀進度 / 篩選列浮起）─────
@@ -967,6 +1090,9 @@
       const stickyTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
       bar.classList.toggle('is-stuck', bar.getBoundingClientRect().top <= stickyTop + 1);
     }
+
+    // 捲動時順便補揭示（內部已節流）。IO 在手機上會漏，這裡是最後一道保險。
+    maybeRescue();
   }
 
   function queueScrollFx() {
@@ -1122,8 +1248,20 @@
       modalRoot.querySelectorAll('.random-scopes .chip').forEach((c) => c.classList.remove('chip-on'));
       actionEl.classList.add('chip-on');
       popOnce(actionEl, 400);
+      syncRollPool();                  // 換了食堂，可抽數目跟著變
     } else if (action === 'chips-prev' || action === 'chips-next') {
       scrollChips(action === 'chips-next' ? 1 : -1);
+    } else if (action === 'set-meal') {
+      const canteenId = state.route.canteenId;
+      const f = getFilter(canteenId);
+      const next = actionEl.getAttribute('data-id') || '';
+      if (f.meal !== next) {
+        f.meal = next;
+        f.cat = null;              // 分類 chips 整批換掉，原本選的分類多半不在新餐段裡
+        chipScrollLeft = 0;        // 新的一批 chip 從頭看起
+      }
+      renderCanteen(canteenId, { enter: true });
+      popOnce(appEl.querySelector('.meal-tab.is-on'), 400);
     } else if (action === 'set-cat') {
       const canteenId = state.route.canteenId;
       const f = getFilter(canteenId);

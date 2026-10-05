@@ -50,6 +50,16 @@
     randomAgain: { zh: '再來一次', en: 'Roll again' },
     randomView: { zh: '查看這道菜', en: 'View this dish' },
     randomPick: { zh: '今日之選', en: "TODAY'S PICK" },
+    randomPool: { zh: '可抽 {n} 道菜', en: '{n} dishes in the draw' },
+    randomPoolEmpty: { zh: '沒有可抽的菜——黑名單可能把全部菜品都排除了。', en: 'Nothing to draw — the blacklist may have excluded every dish.' },
+
+    /* 餐段（早餐／午餐／晚餐）：食堂頁分類 chips 的上層。
+       全日 = 不按餐段篩選（跟下面 chips 的「全部」是兩件事）。 */
+    mealLabel: { zh: '餐段', en: 'Meal' },
+    mealAll: { zh: '全日', en: 'All day' },
+    mealBreakfast: { zh: '早餐', en: 'Breakfast' },
+    mealLunch: { zh: '午餐', en: 'Lunch' },
+    mealDinner: { zh: '晚餐', en: 'Dinner' },
 
     /* 飯堂頁 */
     backHome: { zh: '首頁', en: 'Home' },

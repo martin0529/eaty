@@ -14,14 +14,18 @@
  */
 window.CITYU_EATS_DATA = {
 
+  /* meal ＝ 這個分類屬於哪幾個餐段（早餐／午餐／晚餐）。
+   * 寫成逗號分隔字串：'breakfast' / 'lunch,dinner' / 'breakfast,lunch,dinner'。
+   * 留空 → 不分餐，只在「全部」看得到（例如 $1 環保餐盒）。
+   * ⚠️ 線上菜單的分類來自 Supabase（categories 表），改這裡只影響斷網時的後備。 */
   categories: [
-    { id: 'rice',     zh: '中式飯類', en: 'Rice & Chinese' },
-    { id: 'noodle',   zh: '粉麵',     en: 'Noodles' },
-    { id: 'japanese', zh: '日韓',     en: 'Japanese & Korean' },
-    { id: 'asian',    zh: '東南亞',   en: 'Southeast Asian' },
-    { id: 'western',  zh: '西式',     en: 'Western' },
-    { id: 'snack',    zh: '小食',     en: 'Snacks' },
-    { id: 'drinks',   zh: '飲品甜品', en: 'Drinks & Dessert' },
+    { id: 'rice',     zh: '中式飯類', en: 'Rice & Chinese',   meal: 'lunch,dinner' },
+    { id: 'noodle',   zh: '粉麵',     en: 'Noodles',           meal: 'lunch,dinner' },
+    { id: 'japanese', zh: '日韓',     en: 'Japanese & Korean', meal: 'lunch,dinner' },
+    { id: 'asian',    zh: '東南亞',   en: 'Southeast Asian',   meal: 'lunch,dinner' },
+    { id: 'western',  zh: '西式',     en: 'Western',           meal: 'lunch,dinner' },
+    { id: 'snack',    zh: '小食',     en: 'Snacks',            meal: 'lunch,dinner' },
+    { id: 'drinks',   zh: '飲品甜品', en: 'Drinks & Dessert',  meal: 'lunch,dinner' },
   ],
 
   canteens: [
@@ -145,7 +149,66 @@ window.CITYU_EATS_DATA = {
 (function () {
   'use strict';
   const CFG = window.CITYU_EATS_CONFIG;
-  const CACHE_KEY = 'cityu-eats:menu-cache:v1';
+  const CACHE_KEY = 'cityu-eats:menu-cache:v2';   // v2：categories 多了 meal（餐段），舊快取沒有這個欄位
+
+  /* ── 餐段（meal）解析 ─────────────────────────
+   * 雲端 categories.meal 是逗號分隔字串（例如 'lunch,dinner'），這裡統一轉成
+   * 固定次序的陣列。接受中文別名與全角分隔號；'all'／'三餐' ＝ 三餐通用；
+   * 空值 → []（不分餐：只在「全部」看得到）。
+   */
+  const MEALS = ['breakfast', 'lunch', 'dinner'];
+  const MEAL_ALIAS = {
+    b: 'breakfast', breakfast: 'breakfast', 早餐: 'breakfast', 早點: 'breakfast', 早市: 'breakfast',
+    l: 'lunch', lunch: 'lunch', 午餐: 'lunch', 中餐: 'lunch', 午市: 'lunch',
+    d: 'dinner', dinner: 'dinner', supper: 'dinner', 晚餐: 'dinner', 晚市: 'dinner',
+  };
+  const MEAL_ALL = ['all', 'always', 'day', '全天', '三餐', '全日'];
+  function parseMeal(v) {
+    if (Array.isArray(v)) {
+      const set = new Set(v.map((x) => String(x).trim().toLowerCase()));
+      return MEALS.filter((m) => set.has(m));
+    }
+    const raw = String(v == null ? '' : v).trim();
+    if (!raw) return [];
+    const set = new Set();
+    for (const part of raw.split(/[,，、;；/|\s]+/)) {
+      const t = part.trim().toLowerCase();
+      if (!t) continue;
+      if (MEAL_ALL.indexOf(t) >= 0) { MEALS.forEach((m) => set.add(m)); continue; }
+      if (MEAL_ALIAS[t]) set.add(MEAL_ALIAS[t]);
+    }
+    return MEALS.filter((m) => set.has(m));   // 固定次序，方便除錯與比對
+  }
+  function normalizeCategory(r) {
+    return { id: r.id, zh: r.zh || r.id, en: r.en || r.zh || r.id, meal: parseMeal(r.meal) };
+  }
+
+  // 內建分類的 meal 是字串，先在這裡轉成陣列，讓「雲端／快取／內建」三種來源形狀一致
+  window.CITYU_EATS_DATA.categories.forEach((c) => { c.meal = parseMeal(c.meal); });
+
+  /* ── 抽籤黑名單：「今天吃什麼」要排除的菜品／分類 ──
+   * 來源 ＝ 雲端 roll_blacklist 表（前端只讀，在 dashboard 加／刪一行即時生效）。
+   * 讀不到（離線、表未建立）才用下面這份內建清單後備；雲端回了空陣列＝真的不排除任何東西。
+   */
+  const ROLL_FALLBACK_ROWS = [
+    { kind: 'category', value: 'drinks' },          // 飲品甜品（AC2／AC3）
+    { kind: 'category', value: '飲品' },             // AC1 熱／凍飲料
+    { kind: 'category', value: '特色飲品' },         // AC1 汽泡茶／梳打
+    { kind: 'category', value: 'Coffee Lounge' },   // AC1 咖啡角
+    { kind: 'category', value: '其他' },             // 環保餐盒／餐具，非食品
+  ];
+  function blacklistFromRows(rows) {
+    const dishes = new Set();
+    const categories = new Set();
+    for (const r of rows || []) {
+      const kind = String((r && r.kind) || '').trim().toLowerCase();
+      const value = String((r && r.value) != null ? r.value : '').trim();
+      if (!value) continue;
+      if (kind === 'dish') dishes.add(value);
+      else if (kind === 'category') categories.add(value);
+    }
+    return { dishes, categories };
+  }
 
   function apply(canteens, dishes, categories) {
     const D = window.CITYU_EATS_DATA;
@@ -176,30 +239,41 @@ window.CITYU_EATS_DATA = {
       tags: Array.isArray(r.tags) ? r.tags : [],
     };
   }
+  const ROLL_TABLE = CFG.SUPABASE_ROLL_TABLE || 'roll_blacklist';
+
   async function fetchCloud() {
     if (!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY) return null;
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 5000);
     const headers = { apikey: CFG.SUPABASE_ANON_KEY };
     try {
-      const [cRes, dRes, catRes] = await Promise.all([
+      const [cRes, dRes, catRes, rollRes] = await Promise.all([
         fetch(CFG.SUPABASE_URL + '/rest/v1/canteens?select=*&order=sort.asc', { headers, signal: ctl.signal }),
         fetch(CFG.SUPABASE_URL + '/rest/v1/dishes?select=*&order=sort.asc', { headers, signal: ctl.signal }),
         fetch(CFG.SUPABASE_URL + '/rest/v1/categories?select=*&order=sort.asc', { headers, signal: ctl.signal }),
+        // 黑名單是加分項：這支掛掉（表未建立、被 RLS 擋、斷線）不可以拖垮整個菜單載入
+        fetch(CFG.SUPABASE_URL + '/rest/v1/' + ROLL_TABLE + '?select=kind,value', { headers, signal: ctl.signal })
+          .catch(() => null),
       ]);
       if (!cRes.ok || !dRes.ok) return null;
       const cs = await cRes.json();
       const ds = await dRes.json();
       if (!Array.isArray(cs) || !Array.isArray(ds) || !cs.length || !ds.length) return null;
       let cats = null;
-      if (catRes.ok) {
+      if (catRes && catRes.ok) {
         const list = await catRes.json();
-        if (Array.isArray(list) && list.length) cats = list.map((c) => ({ id: c.id, zh: c.zh, en: c.en }));
+        if (Array.isArray(list) && list.length) cats = list.map(normalizeCategory);
+      }
+      let blacklist = null;
+      if (rollRes && rollRes.ok) {
+        const rows = await rollRes.json();
+        if (Array.isArray(rows)) blacklist = blacklistFromRows(rows);   // 空陣列＝真的不排除任何東西
       }
       return {
         canteens: cs.map(normalizeCanteen),
         dishes: ds.filter((d) => d.available !== false).map(normalizeDish),
         categories: cats,
+        blacklist,
       };
     } catch (e) {
       return null;
@@ -208,14 +282,35 @@ window.CITYU_EATS_DATA = {
     }
   }
 
+  function serializeBlacklist(bl) {
+    if (!bl) return null;
+    return { dishes: Array.from(bl.dishes), categories: Array.from(bl.categories) };
+  }
+  function deserializeBlacklist(obj) {
+    if (!obj) return null;
+    return {
+      dishes: new Set(Array.isArray(obj.dishes) ? obj.dishes : []),
+      categories: new Set(Array.isArray(obj.categories) ? obj.categories : []),
+    };
+  }
+
   window.CityuEatsMenu = {
-    source: 'bundled', // 'cloud' | 'cache' | 'bundled'
+    source: 'bundled',                       // 'cloud' | 'cache' | 'bundled'
+    rollBlacklist: blacklistFromRows(ROLL_FALLBACK_ROWS),
+    rollBlacklistSource: 'fallback',         // 'cloud' | 'cache' | 'fallback'
     async load() {
       const cloud = await fetchCloud();
       if (cloud) {
         apply(cloud.canteens, cloud.dishes, cloud.categories);
+        if (cloud.blacklist) {
+          this.rollBlacklist = cloud.blacklist;
+          this.rollBlacklistSource = 'cloud';
+        }
         try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), canteens: cloud.canteens, dishes: cloud.dishes, categories: cloud.categories }));
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            ts: Date.now(), canteens: cloud.canteens, dishes: cloud.dishes,
+            categories: cloud.categories, blacklist: serializeBlacklist(cloud.blacklist),
+          }));
         } catch (e) { /* 儲存空間滿了就算 */ }
         this.source = 'cloud';
         return this.source;
@@ -226,6 +321,8 @@ window.CITYU_EATS_DATA = {
           const c = JSON.parse(raw);
           if (c && Array.isArray(c.dishes) && c.dishes.length && Array.isArray(c.canteens) && c.canteens.length) {
             apply(c.canteens, c.dishes, c.categories);
+            const bl = deserializeBlacklist(c.blacklist);
+            if (bl) { this.rollBlacklist = bl; this.rollBlacklistSource = 'cache'; }
             this.source = 'cache';
             return this.source;
           }

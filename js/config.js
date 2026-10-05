@@ -6,7 +6,7 @@
  *   supabase-setup.sql，然後把下面 SUPABASE_URL 和 SUPABASE_ANON_KEY 填上。
  */
 window.CITYU_EATS_CONFIG = {
-  VERSION: '0.6.1',
+  VERSION: '0.6.2',
 
   // Supabase project: Eaty (2026-10-04 由舊專案 Cityu canteen comment website 遷移)
   SUPABASE_URL: 'https://adnownneldfalplbdhvd.supabase.co',

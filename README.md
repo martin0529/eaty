@@ -60,10 +60,11 @@ A static, build-free menu & review guide for the three CityU HK canteens. No fra
 需要一個免費的 [Supabase](https://supabase.com) 專案。到 **SQL Editor** 執行：
 
 ```
-supabase/setup.sql          ← 完整設定，從零可跑（建表 + 權限 + 種子資料）
+supabase/setup.sql                    ← 完整設定，從零可跑（建表 + 權限 + 種子資料）
+supabase/ac1-breakfast-2026-10-05.sql ← 增量：AC1 早餐菜單同步（9 分類／29 菜品＋官方英文名補齊，跑完 setup.sql 後接著跑）
 ```
 
-跑完會建立 5 張表並灌入資料：
+跑完會建立 5 張表並灌入資料（再加上早餐增量後：38 分類／154 道菜）：
 
 | 表 | 內容 |
 |---|---|

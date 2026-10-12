@@ -71,6 +71,13 @@
     const short = String(c.short || '').toUpperCase();
     return short && name.toUpperCase().startsWith(short) ? name : `${c.short} ${name}`;
   }
+  /* 分類標題的英文副名：跟主名相同時不要重複顯示。
+     兩種情況會撞：① 中英同名（如 AC2 的「EURO GOURMET」）；② 英文模式下主名本來就是 en。 */
+  function catHeadAlt(cat) {
+    const en = String(cat.en || '').trim();
+    return en && en.toLowerCase() !== String(I18N.pick(cat) || '').trim().toLowerCase()
+      ? `<span class="cat-head-en">${esc(en)}</span>` : '';
+  }
 
   /* ── 動效工具 ───────────────────────────── */
 
@@ -521,7 +528,7 @@
         seen += list.length;
         return `
           <div class="cat-group${enter ? ' enter' : ''}"${enter ? ` style="--gi:${clamp(base + 1, 0, 9)}"` : ''}>
-            <h3 class="cat-head">${esc(I18N.pick(cat))}<span class="cat-head-en">${esc(cat.en)}</span><i>${list.length}</i></h3>
+            <h3 class="cat-head">${esc(I18N.pick(cat))}${catHeadAlt(cat)}<i>${list.length}</i></h3>
             <div class="dish-grid${enterCls}">${list.map((d, i) => dishCard(d, enter ? clamp(base + i, 0, 9) : undefined)).join('')}</div>
           </div>`;
       }).join('');

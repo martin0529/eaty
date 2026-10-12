@@ -289,8 +289,10 @@ button.chip:active{transform:scale(.94)}
 
 /* ── 飯堂卡 ── */
 .canteen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.canteen-cell{display:flex;flex-direction:column;min-width:0}
 .canteen-card{
   background:#fff;border:1.5px solid var(--line);border-radius:var(--r-card);overflow:hidden;display:flex;flex-direction:column;
+  flex:1;min-width:0;
   transition:transform var(--dur-3) var(--ease),box-shadow var(--dur-3) var(--ease),border-color var(--dur-2) var(--ease);
 }
 .canteen-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-card);border-color:#DCD9D1;will-change:transform}
@@ -313,6 +315,15 @@ button.chip:active{transform:scale(.94)}
 .canteen-card-foot .n{font:700 12.5px/1.4 var(--disp);color:var(--ink)}
 .canteen-card-foot .n b{font-size:16px}
 .canteen-card-foot .go{font:700 13px/1 var(--disp);display:inline-flex;align-items:center;gap:6px;color:var(--red-deep)}
+.canteen-card-order{
+  display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;
+  padding:10px 14px;border:1.5px solid var(--line);border-radius:999px;
+  font:700 12.5px/1 var(--disp);color:var(--red-deep);background:#fff;
+  transition:border-color var(--dur-2) var(--ease),background var(--dur-2) var(--ease),color var(--dur-2) var(--ease);
+}
+.canteen-card-order .icn{transition:transform var(--dur-3) var(--ease)}
+.canteen-card-order:hover{border-color:var(--red-deep);background:var(--red-deep);color:#fff}
+.canteen-card-order:hover .icn{transform:translate(2px,-2px)}
 .canteen-card-foot .go .icn{transition:transform var(--dur-3) var(--ease)}
 .canteen-card:hover .canteen-card-foot .go .icn{transform:translateX(5px)}
 .canteen-card-foot .go:hover{text-decoration:underline}

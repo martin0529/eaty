@@ -104,8 +104,16 @@
       en: 'CityU eating starts with Eaty — menus, reviews and avoid-list intel for all three canteens, at a glance.',
     },
     footerNote: {
-      zh: '學生自製網站，非官方，與香港城市大學無從屬關係。AC1 菜單於 2026-10-02 從官方點餐站抄錄，AC2／AC3 為代表性資料；價錢以食堂現場為準。',
-      en: 'A student-built, unofficial site, not affiliated with CityU. AC1 menu copied from the official ordering site on 2026-10-02; AC2/AC3 entries are representative — prices at the counter apply.',
+      zh: '學生自製網站，非官方，與香港城市大學無從屬關係。菜單最後更新：2026-10-12（AC1 抄錄自官方點餐站，AC2 按食堂現場菜單整理，AC3 抄錄自官方點餐平台）；價錢以食堂現場為準。',
+      en: 'A student-built, unofficial site, not affiliated with CityU. Menu last updated 2026-10-12 (AC1 from the official ordering site, AC2 from the on-site menu boards, AC3 from the official ordering platform); prices at the counter apply.',
+    },
+    footerPhotoNote: {
+      zh: '部分圖片取自網上圖庫，僅供參考，非實際商品照。',
+      en: 'Some photos are sourced from online stock libraries and are for reference only — not actual product shots.',
+    },
+    footerUpdated: {
+      zh: '最後更新 2026-10-12',
+      en: 'Last updated 2026-10-12',
     },
     footerSamplesHidden: { zh: '隱藏範例評論', en: 'Hide sample reviews' },
     footerSamplesShown: { zh: '顯示範例評論', en: 'Show sample reviews' },

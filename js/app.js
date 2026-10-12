@@ -338,24 +338,27 @@
       ? (rated.reduce((s, d) => s + state.stats[d.id].avg, 0) / rated.length)
       : 0;
     return `
-      <a class="canteen-card canteen-${c.color} reveal" href="#/canteen/${c.id}">
-        ${c.photo ? `<figure><img src="${esc(c.photo)}" alt="${esc(I18N.lang() === 'zh' ? c.zh : c.en)}" loading="lazy"></figure>` : ''}
-        <span class="canteen-card-body">
-          <span class="chip"><i class="dot"></i>${esc(c.short)}${I18N.lang() === 'zh' ? ` · ${esc(c.bldgZh)}` : ` · ${esc(c.bldgEn)}`}</span>
-          <span class="canteen-card-name">
-            <h3>${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</h3>
-            <span>${esc(canteenAltName(c))}</span>
+      <div class="canteen-cell">
+        <a class="canteen-card canteen-${c.color} reveal" href="#/canteen/${c.id}">
+          ${c.photo ? `<figure><img src="${esc(c.photo)}" alt="${esc(I18N.lang() === 'zh' ? c.zh : c.en)}" loading="lazy"></figure>` : ''}
+          <span class="canteen-card-body">
+            <span class="chip"><i class="dot"></i>${esc(c.short)}${I18N.lang() === 'zh' ? ` · ${esc(c.bldgZh)}` : ` · ${esc(c.bldgEn)}`}</span>
+            <span class="canteen-card-name">
+              <h3>${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</h3>
+              <span>${esc(canteenAltName(c))}</span>
+            </span>
+            <span class="canteen-card-meta">
+              <span class="row">${icon('clock')}${esc(I18N.lang() === 'zh' ? c.hoursZh : c.hoursEn)}</span>
+            </span>
+            <p class="canteen-card-fact">${esc(I18N.lang() === 'zh' ? c.factZh : c.factEn)}</p>
+            <span class="canteen-card-foot">
+              <span class="n"><b>${dishes.length}</b> ${esc(I18N.t('dishesCount'))}${rated.length ? ` · ★ ${avg.toFixed(1)}` : ''}</span>
+              <span class="go">${esc(I18N.t('viewMenu'))}${icon('arrow')}</span>
+            </span>
           </span>
-          <span class="canteen-card-meta">
-            <span class="row">${icon('clock')}${esc(I18N.lang() === 'zh' ? c.hoursZh : c.hoursEn)}</span>
-          </span>
-          <p class="canteen-card-fact">${esc(I18N.lang() === 'zh' ? c.factZh : c.factEn)}</p>
-          <span class="canteen-card-foot">
-            <span class="n"><b>${dishes.length}</b> ${esc(I18N.t('dishesCount'))}${rated.length ? ` · ★ ${avg.toFixed(1)}` : ''}</span>
-            <span class="go">${esc(I18N.t('viewMenu'))}${icon('arrow')}</span>
-          </span>
-        </span>
-      </a>`;
+        </a>
+        ${c.orderUrl ? `<a class="canteen-card-order" href="${esc(c.orderUrl)}" target="_blank" rel="noopener">${esc(I18N.t('officialOrdering'))}${icon('ext')}</a>` : ''}
+      </div>`;
   }
 
   function latestReviewCards() {
@@ -614,11 +617,12 @@ ${mealBar}
             <p class="footer-brand">Eaty<i>.</i></p>
             <p class="footer-note">${esc(I18N.t('footerTagline'))}</p>
             <p class="footer-note">${esc(I18N.t('footerNote'))}</p>
+            <p class="footer-note">${esc(I18N.t('footerPhotoNote'))}</p>
           </div>
           <div class="footer-links">
             <a href="https://www.cityu.edu.hk/zh-hk/directories/catering" target="_blank" rel="noopener">${esc(I18N.t('footerOfficial'))}${icon('ext')}</a>
             ${sampleToggle}
-            <span class="footer-storage">v${esc(window.CITYU_EATS_CONFIG.VERSION || '')} · ${esc(I18N.t(store.remoteAvailable() ? 'footerStorageCloud' : 'footerStorageLocal'))}</span>
+            <span class="footer-storage">v${esc(window.CITYU_EATS_CONFIG.VERSION || '')} · ${esc(I18N.t('footerUpdated'))} · ${esc(I18N.t(store.remoteAvailable() ? 'footerStorageCloud' : 'footerStorageLocal'))}</span>
           </div>
         </div>
       </footer>`;

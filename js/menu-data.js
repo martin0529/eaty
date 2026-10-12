@@ -60,6 +60,7 @@ window.CITYU_EATS_DATA = {
       hoursEn: 'Mon–Fri 07:30–21:00 (Sun & PH closed)',
       color: 'ac3',
       photo: 'assets/sandwiches-board.jpg',
+      orderUrl: 'https://inth5.qmai.com/mp-monorepo-inth5/web/index.html#/pages/takefood/index?store_id=221033&multi_id=328009',
       factZh: '電話 +852 4683-4908・付款：現金／信用卡／八達通／AlipayHK／WeChat Pay HK',
       factEn: 'Tel +852 4683-4908 · Payment: Cash / Credit Card / Octopus / AlipayHK / WeChat Pay HK',
     },

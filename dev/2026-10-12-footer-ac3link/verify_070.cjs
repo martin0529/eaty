@@ -22,7 +22,7 @@ const { chromium } = require('playwright-core');
     page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
     page.on('pageerror', (e) => errs.push('PAGEERROR: ' + e.message));
 
-    await page.goto('http://127.0.0.1:8777/', { waitUntil: 'networkidle' });
+    await page.goto('https://eaty.pages.dev/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(900);
 
     const ver = await page.evaluate(() => window.CITYU_EATS_CONFIG.VERSION);
@@ -45,7 +45,7 @@ const { chromium } = require('playwright-core');
     await page.waitForTimeout(400);
     const b = await page.locator('.footer').boundingBox();
     await page.screenshot({
-      path: `dev/2026-10-12-footer-ac3link/070-footer-${vp.name}.png`,
+      path: `dev/2026-10-12-footer-ac3link/LIVE-070-footer-${vp.name}.png`,
       clip: { x: b.x, y: Math.max(0, b.y), width: b.width, height: Math.min(b.height, 900) },
     });
 

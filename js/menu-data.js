@@ -38,8 +38,8 @@ window.CITYU_EATS_DATA = {
       color: 'ac1',
       photo: 'assets/roast-pork-shop.jpg',
       orderUrl: 'https://csd.order.place/home/store/112870',
-      factZh: '三大食堂中唯一設有官方網上點餐，車仔麵、燒味、日式丼飯一應俱全。',
-      factEn: 'The only canteen with official online ordering — roast meats, noodles, donburi and more.',
+      factZh: '電話 +852 2971-0668・付款：現金／信用卡／八達通／AlipayHK／Apple Pay／BoC Pay／PayMe／WeChat Pay HK',
+      factEn: 'Tel +852 2971-0668 · Payment: Cash / Credit Card / Octopus / AlipayHK / Apple Pay / BoC Pay / PayMe / WeChat Pay HK',
     },
     {
       id: 'ac2', short: 'AC2',
@@ -49,8 +49,8 @@ window.CITYU_EATS_DATA = {
       hoursEn: 'Mon–Sun 07:30–21:00 (CNY closed)',
       color: 'ac2',
       photo: 'assets/dishes-table.jpg',
-      factZh: '全校最大的 food court（860 座），$30 雙餸飯是城大傳說級的超值之選。',
-      factEn: 'The biggest food court on campus (860 seats). The HK$30 two-dish rice is legendary value.',
+      factZh: '電話 +852 2312-7928・付款：現金／信用卡／八達通／AlipayHK／Apple Pay／BoC Pay／PayMe／Union Pay／WeChat Pay HK',
+      factEn: 'Tel +852 2312-7928 · Payment: Cash / Credit Card / Octopus / AlipayHK / Apple Pay / BoC Pay / PayMe / UnionPay / WeChat Pay HK',
     },
     {
       id: 'ac3', short: 'AC3',
@@ -60,8 +60,8 @@ window.CITYU_EATS_DATA = {
       hoursEn: 'Mon–Fri 07:30–21:00 (Sun & PH closed)',
       color: 'ac3',
       photo: 'assets/sandwiches-board.jpg',
-      factZh: '座落教學樓頂層的小 Bistro，人少安靜，吞拿魚披薩是鎮店之寶。',
-      factEn: 'A quiet little bistro on the top teaching floors — the tuna pizza is the house icon.',
+      factZh: '電話 +852 4683-4908・付款：現金／信用卡／八達通／AlipayHK／WeChat Pay HK',
+      factEn: 'Tel +852 4683-4908 · Payment: Cash / Credit Card / Octopus / AlipayHK / WeChat Pay HK',
     },
   ],
 

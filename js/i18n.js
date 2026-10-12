@@ -124,6 +124,7 @@
     footerStorageLocal: { zh: '評論暫存於你的瀏覽器', en: 'Reviews stored in your browser' },
     footerStorageCloud: { zh: '評論已雲端共享（Supabase）', en: 'Reviews shared via Supabase' },
     footerOfficial: { zh: '官方餐廳資訊', en: 'Official catering info' },
+    footerFeedback: { zh: '意見回饋 / 補充菜單', en: 'Feedback / add a dish' },
 
     /* 通用 */
     close: { zh: '關閉', en: 'Close' },

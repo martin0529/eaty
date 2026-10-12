@@ -6,7 +6,7 @@
  *   supabase-setup.sql，然後把下面 SUPABASE_URL 和 SUPABASE_ANON_KEY 填上。
  */
 window.CITYU_EATS_CONFIG = {
-  VERSION: '0.6.9',
+  VERSION: '0.7.0',
 
   // Supabase project: Eaty (2026-10-04 由舊專案 Cityu canteen comment website 遷移)
   SUPABASE_URL: 'https://adnownneldfalplbdhvd.supabase.co',
@@ -29,4 +29,9 @@ window.CITYU_EATS_CONFIG = {
   STORAGE_KEY: 'cityu-eats:reviews:v1',
   LANG_KEY: 'cityu-eats:lang',
   SAMPLES_KEY: 'cityu-eats:hide-samples',
+
+  // 頁尾「意見回饋 / 補充菜單」外部問卷（Google Form）。
+  // 刻意放在站外：站內掛問卷／提示會干擾 A2「自願留言率」的量測
+  // （詳見 eaty-study/method-assumption-2.md 的倫理與方法章）。
+  FEEDBACK_URL: 'https://forms.gle/t9KX8LSuJgEMZ1Ug9',
 };

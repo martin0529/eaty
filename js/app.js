@@ -621,6 +621,7 @@ ${mealBar}
             <p class="footer-note footer-note-strong">${esc(I18N.t('footerCoverageNote'))}</p>
           </div>
           <div class="footer-links">
+            <a href="${esc(window.CITYU_EATS_CONFIG.FEEDBACK_URL)}" target="_blank" rel="noopener">${esc(I18N.t('footerFeedback'))}${icon('ext')}</a>
             <a href="https://www.cityu.edu.hk/zh-hk/directories/catering" target="_blank" rel="noopener">${esc(I18N.t('footerOfficial'))}${icon('ext')}</a>
             ${sampleToggle}
             <span class="footer-storage">v${esc(window.CITYU_EATS_CONFIG.VERSION || '')} · ${esc(I18N.t('footerUpdated'))} · ${esc(I18N.t(store.remoteAvailable() ? 'footerStorageCloud' : 'footerStorageLocal'))}</span>

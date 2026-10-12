@@ -618,6 +618,7 @@ ${mealBar}
             <p class="footer-note">${esc(I18N.t('footerTagline'))}</p>
             <p class="footer-note">${esc(I18N.t('footerNote'))}</p>
             <p class="footer-note">${esc(I18N.t('footerPhotoNote'))}</p>
+            <p class="footer-note footer-note-strong">${esc(I18N.t('footerCoverageNote'))}</p>
           </div>
           <div class="footer-links">
             <a href="https://www.cityu.edu.hk/zh-hk/directories/catering" target="_blank" rel="noopener">${esc(I18N.t('footerOfficial'))}${icon('ext')}</a>

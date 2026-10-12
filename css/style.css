@@ -420,6 +420,8 @@ button.chip:active{transform:scale(.94)}
 .footer-brand{font:800 30px/1 var(--disp);letter-spacing:-.02em}
 .footer-brand i{font-style:normal;color:var(--red-onink)}
 .footer-note{color:rgba(255,255,255,.62);margin-top:14px;font-size:12.5px;max-width:34em;line-height:1.8}
+/* 免責聲明：略提高對比、加左側細線，與上方的說明段落區隔開 */
+.footer-note-strong{color:rgba(255,255,255,.8);font-size:12px;padding-left:11px;border-left:2px solid rgba(255,255,255,.26)}
 .footer-links{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
 .footer-links a,.footer-links .linklike{font:600 13px/1.5 var(--sans);color:rgba(255,255,255,.85);border:none;display:inline-flex;align-items:center;gap:7px}
 .footer-links a{transition:color var(--dur-2) var(--ease),transform var(--dur-2) var(--ease)}

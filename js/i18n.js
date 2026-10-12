@@ -111,6 +111,10 @@
       zh: '部分圖片取自網上圖庫，僅供參考，非實際商品照。',
       en: 'Some photos are sourced from online stock libraries and are for reference only — not actual product shots.',
     },
+    footerCoverageNote: {
+      zh: '本站菜單為人手整理，並非食堂全部菜品，未涵蓋所有檔口、期間限定與每日供應的菜式。菜式、價錢與供應時間或有變動，一律以食堂現場為準。',
+      en: 'This menu is hand-copied and is not exhaustive — it does not cover every stall, limited-time item, or daily special. Dishes, prices and availability may change; the canteen counter always takes precedence.',
+    },
     footerUpdated: {
       zh: '最後更新 2026-10-12',
       en: 'Last updated 2026-10-12',

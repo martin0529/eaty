@@ -1,10 +1,10 @@
 # Eaty. — 城大搵食指南 · CityU Canteen Guide
 
-一個為香港城市大學（CityU HK）而寫的飯堂菜單與評價指南。收錄 **三大食堂**（AC1 城大食坊、AC2 Canteen、AC3 Bistro）共 **125 道菜**，可以按 **餐段（早餐／午餐／晚餐）** 與菜品分類篩選，看每一道菜的價錢、照片與同學的真實評價，還有「今天吃什麼」隨機抽籤。
+一個為香港城市大學（CityU HK）而寫的飯堂菜單與評價指南。收錄 **4 間食堂**（AC1 城大食坊、AC2 Canteen、AC3 Bistro、CMC Cafe）共 **380 道菜**，可以按 **餐段（早餐／午餐／晚餐）** 與菜品分類篩選，看每一道菜的價錢、照片與同學的真實評價，還有「今天吃什麼」隨機抽籤。
 
 純靜態網站：**沒有建置步驟、沒有框架、沒有 `npm install`**——打開 `index.html` 就能跑。
 
-A static, build-free menu & review guide for the three CityU HK canteens. No framework, no bundler, no dependencies to install — just open `index.html`.
+A static, build-free menu & review guide for the CityU HK canteens. No framework, no bundler, no dependencies to install — just open `index.html`.
 
 ---
 
@@ -12,7 +12,7 @@ A static, build-free menu & review guide for the three CityU HK canteens. No fra
 
 | | |
 |---|---|
-| 🍜 **菜單瀏覽** | 125 道菜 / 29 個分類，可按食堂與菜品分類篩選 |
+| 🍜 **菜單瀏覽** | 380 道菜 / 73 個分類，可按食堂與菜品分類篩選；AC2 部分檔口可直接跳官方點餐 |
 | 🕗 **餐段切換** | 食堂頁最上層是「全日／早餐／午餐／晚餐」，切換後分類與菜品一起收窄 |
 | ⭐ **真實評價** | 1–5 星 + 必食／普通／避雷三種評價，寫入 Supabase（全校共享） |
 | 🎲 **今天吃什麼** | 隨機抽籤；排除清單存在 Supabase，隨時自己改，十秒內有答案 |
@@ -61,21 +61,32 @@ A static, build-free menu & review guide for the three CityU HK canteens. No fra
 
 ```
 supabase/setup.sql                    ← 完整設定，從零可跑（建表 + 權限 + 種子資料）
-supabase/ac1-breakfast-2026-10-05.sql ← 增量：AC1 早餐菜單同步（9 分類／29 菜品＋官方英文名補齊）
-supabase/ac1-lunch-2026-10-05.sql     ← 增量：AC1 午市菜單同步（12 分類／34 菜品＋餐段修正）
 ```
 
-跑完會建立 5 張表並灌入資料（再加上早餐＋午市增量後：50 分類／188 道菜）：
+之後按日期順序跑增量（全部可重複執行）：
+
+```
+supabase/ac1-breakfast-2026-10-05.sql        ← AC1 早餐菜單同步
+supabase/ac1-lunch-2026-10-05.sql            ← AC1 午市菜單同步
+supabase/ac2-menu-2026-10-12.sql             ← AC2 按現場檔口重建菜單
+supabase/ac3-menu-2026-10-12.sql             ← AC3 上線（爬自官方點餐平台）
+supabase/teahouse-2026-10-12.sql             ← AC2 四季茶坊 + 全站補圖
+supabase/ac3-snacks-photo-fix-2026-10-12.sql ← 修 AC3「小食」7 張相同佔位圖
+supabase/canteen-contact-2026-10-12.sql      ← 食堂簡介改「電話 + 付款方式」
+supabase/ac2-stalls-cmc-2026-10-14.sql       ← AC2 兩個檔口官方菜單 + 拾味 + 新食堂 CMC Cafe
+```
+
+跑完會建立 5 張表並灌入資料。下表是**跑完全部增量之後**的現況：
 
 | 表 | 內容 |
 |---|---|
-| `canteens` | 3 間食堂 |
-| `categories` | 29 個菜品分類（含 `meal` 餐段欄位） |
-| `dishes` | 125 道菜 |
+| `canteens` | 4 間食堂（`order_url` 放大食堂的官方下單連結） |
+| `categories` | 73 個被用到的菜品分類（含 `meal` 餐段欄位、`order_url` 檔口下單連結） |
+| `dishes` | 380 道菜 |
 | `reviews` | 使用者評論（初始為空） |
 | `roll_blacklist` | 「今天吃什麼」抽籤排除清單 |
 
-這個檔案**可重複執行**，不會弄壞既有資料。
+`setup.sql` 與每個增量檔都**可重複執行**，不會弄壞既有資料。
 
 然後把 **Project Settings → API Keys** 的兩個值填進 `js/config.js`：
 
@@ -93,6 +104,9 @@ SUPABASE_ANON_KEY: 'sb_publishable_...',
 | 檔案 | 用途 |
 |---|---|
 | `supabase/setup.sql` | 完整設定，**一般情況只需要這一個** |
+| `supabase/ac2-stalls-cmc-2026-10-14.sql` | AC2 餃餃陣／西北麵館同步官方點餐菜單 + 兩個檔口下單連結 + 新增「拾味 The Pick」+ 新食堂 CMC Cafe |
+| `supabase/ac3-snacks-photo-fix-2026-10-12.sql` | 修 AC3「小食」7 張相同佔位圖（原本 7 道菜共用同一張卡通圖 → 前端顯示空白卡） |
+| `supabase/canteen-contact-2026-10-12.sql` | 食堂簡介改為「電話 + 付款方式」（來源：CityU 官方餐飲目錄） |
 | `supabase/v0.6.0-meal-and-blacklist.sql` | v0.6.0 增量遷移（餐段欄位 + 抽籤黑名單）。內容已包含在 `setup.sql` 的 Part 4，舊專案才需要單獨跑 |
 | `supabase/fix-fact-zh.sql` | 一次性資料修正（歷史遺留，新專案不需要跑） |
 | `supabase/reference/*.sql` | 建置 `setup.sql` 所用的原始片段，**僅供參考、不要直接執行**——它們假設表已存在，在全新專案會報錯 |
@@ -129,7 +143,19 @@ SUPABASE_ANON_KEY: 'sb_publishable_...',
 | `dish` | `dishes.id` | `ac1-pepperoni`、`ac2-claypot` |
 
 「今天吃什麼」的視窗裡會顯示**可抽 N 道菜**，那就是排除清單生效之後的實際池子大小
-（例：AC1 109 道 − 55 道飲品與非食品 = 54 道）。把整張表刪光 = 不再排除任何東西。
+（例：AC1 162 道 − 53 道飲品與非食品 = 109 道）。把整張表刪光 = 不再排除任何東西。
+
+### 3. 檔口下單連結：`categories.order_url`
+
+大食堂的官方下單連結放在 `canteens.order_url`；**檔口**（在網站上就是一個分類）沒有對應的
+`canteens` 列，所以改用 `categories.order_url`：
+
+```sql
+update categories set order_url = 'https://csd.order.place/home/store/212882' where id = '餃餃陣';
+```
+
+填了就會在該分類的標題列（以及單獨選中該分類時）出現「網上點餐」按鈕；留空則不顯示。
+目前 AC2 只有 **餃餃陣**（store `212882`）與 **西北麵館**（store `312882`）兩個檔口有官方點餐店。
 
 ---
 
@@ -166,6 +192,8 @@ npx serve .
 | 版本號（同時刷新快取） | `js/config.js` 的 `VERSION` + `index.html` 裡的 `?v=` 查詢字串 |
 | 食堂介紹、菜名、價錢 | **Supabase `canteens` / `dishes` 表**（不是在 `menu-data.js`） |
 | 某個分類屬於哪個餐段 | **Supabase `categories.meal`** |
+| 哪個檔口可以網上點餐 | **Supabase `categories.order_url`**（留空＝不顯示按鈕） |
+| 食堂本身的官方下單連結 | **Supabase `canteens.order_url`** |
 | 抽籤要排除哪些菜品／分類 | **Supabase `roll_blacklist` 表**（刪光＝不排除） |
 | 是否顯示範例評論 | `js/config.js` 的 `HIDE_SAMPLES` |
 | 配色與動效 | `css/style.css` 最上方的 CSS 變數 |

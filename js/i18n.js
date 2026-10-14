@@ -8,7 +8,7 @@
   const DICT = {
     /* 頁首 */
     siteName: { zh: 'Eaty', en: 'Eaty' },
-    navCanteens: { zh: '三大食堂', en: 'Canteens' },
+    navCanteens: { zh: '食堂', en: 'Canteens' },
     navAvoid: { zh: '避雷榜', en: 'Avoid List' },
     navReviews: { zh: '最新評論', en: 'Latest Reviews' },
     navRandom: { zh: '今天吃什麼', en: 'What to Eat' },
@@ -18,13 +18,14 @@
     /* 首頁 hero */
     heroKicker: { zh: '今日主打', en: "Today's pick" },
     heroTagline: { zh: '城大覓食指南', en: 'CityU Canteen Guide' },
-    heroCta1: { zh: '瀏覽三大食堂', en: 'Browse canteens' },
+    heroCta1: { zh: '瀏覽食堂', en: 'Browse canteens' },
     heroCta2: { zh: '今天吃什麼？隨機幫你選', en: 'What to eat? Roll for me' },
 
     /* 飯堂卡 */
-    canteensHeading: { zh: '三大食堂，一份覓食地圖。', en: 'Three canteens, one food map.' },
+    canteensHeading: { zh: '食堂，一份覓食地圖。', en: 'All canteens, one food map.' },
     dishesCount: { zh: '項菜品', en: ' dishes' },
     officialOrdering: { zh: '官方網上點餐', en: 'Official online ordering' },
+    stallOrdering: { zh: '網上點餐', en: 'Order online' },
     viewMenu: { zh: '查看菜單', en: 'View menu' },
     viewAll: { zh: '查看全部', en: 'See all' },
 
@@ -44,7 +45,7 @@
     /* 隨機器 */
     randomTitle: { zh: '今天吃什麼？', en: 'What to eat today?' },
     randomSub: { zh: '選擇範圍，按下按鈕，交給命運。', en: 'Pick a scope, hit the button, leave it to fate.' },
-    randomScopeAll: { zh: '三大食堂', en: 'All canteens' },
+    randomScopeAll: { zh: '食堂', en: 'All canteens' },
     randomRoll: { zh: '開始！', en: 'Roll!' },
     randomRolling: { zh: '選擇中…', en: 'Rolling…' },
     randomAgain: { zh: '再來一次', en: 'Roll again' },
@@ -100,12 +101,12 @@
 
     /* 頁尾 */
     footerTagline: {
-      zh: '城大覓食，由 Eaty 開始。三大食堂的菜單、評價與避雷情報，一目了然。',
-      en: 'CityU eating starts with Eaty — menus, reviews and avoid-list intel for all three canteens, at a glance.',
+      zh: '城大覓食，由 Eaty 開始。食堂的菜單、評價與避雷情報，一目了然。',
+      en: 'CityU eating starts with Eaty — menus, reviews and avoid-list intel for every canteen, at a glance.',
     },
     footerNote: {
-      zh: '學生自製網站，非官方，與香港城市大學無從屬關係。菜單最後更新：2026-10-12（AC1 抄錄自官方點餐站，AC2 按食堂現場菜單整理，AC3 抄錄自官方點餐平台）；價錢以食堂現場為準。',
-      en: 'A student-built, unofficial site, not affiliated with CityU. Menu last updated 2026-10-12 (AC1 from the official ordering site, AC2 from the on-site menu boards, AC3 from the official ordering platform); prices at the counter apply.',
+      zh: '學生自製網站，非官方，與香港城市大學無從屬關係。菜單最後更新：2026-10-14（AC1 抄錄自官方點餐站，AC2 現場菜單整理、兩個檔口抄錄自官方點餐平台，AC3 抄錄自官方點餐平台，CMC Cafe 抄錄自現場菜單牌）；價錢以食堂現場為準。',
+      en: 'A student-built, unofficial site, not affiliated with CityU. Menu last updated 2026-10-14 (AC1 from the official ordering site; AC2 from the on-site menu boards, with two stalls from the official ordering platform; AC3 from the official ordering platform; CMC Cafe from the on-site menu board); prices at the counter apply.',
     },
     footerPhotoNote: {
       zh: '部分圖片取自網上圖庫，僅供參考，非實際商品照。',
@@ -116,8 +117,8 @@
       en: 'This menu is hand-copied and is not exhaustive — it does not cover every stall, limited-time item, or daily special. Dishes, prices and availability may change; the canteen counter always takes precedence.',
     },
     footerUpdated: {
-      zh: '最後更新 2026-10-12',
-      en: 'Last updated 2026-10-12',
+      zh: '最後更新 2026-10-14',
+      en: 'Last updated 2026-10-14',
     },
     footerSamplesHidden: { zh: '隱藏範例評論', en: 'Hide sample reviews' },
     footerSamplesShown: { zh: '顯示範例評論', en: 'Show sample reviews' },

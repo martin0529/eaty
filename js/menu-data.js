@@ -150,7 +150,7 @@ window.CITYU_EATS_DATA = {
 (function () {
   'use strict';
   const CFG = window.CITYU_EATS_CONFIG;
-  const CACHE_KEY = 'cityu-eats:menu-cache:v2';   // v2：categories 多了 meal（餐段），舊快取沒有這個欄位
+  const CACHE_KEY = 'cityu-eats:menu-cache:v3';   // v3：categories 多了 order_url（檔口下單連結）；v2 是多了 meal
 
   /* ── 餐段（meal）解析 ─────────────────────────
    * 雲端 categories.meal 是逗號分隔字串（例如 'lunch,dinner'），這裡統一轉成
@@ -181,7 +181,11 @@ window.CITYU_EATS_DATA = {
     return MEALS.filter((m) => set.has(m));   // 固定次序，方便除錯與比對
   }
   function normalizeCategory(r) {
-    return { id: r.id, zh: r.zh || r.id, en: r.en || r.zh || r.id, meal: parseMeal(r.meal) };
+    return {
+      id: r.id, zh: r.zh || r.id, en: r.en || r.zh || r.id, meal: parseMeal(r.meal),
+      // 檔口（＝分類）的官方點餐連結；只有部分 AC2 檔口有，其餘為 null
+      orderUrl: r.order_url || null,
+    };
   }
 
   // 內建分類的 meal 是字串，先在這裡轉成陣列，讓「雲端／快取／內建」三種來源形狀一致

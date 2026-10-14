@@ -78,6 +78,13 @@
     return en && en.toLowerCase() !== String(I18N.pick(cat) || '').trim().toLowerCase()
       ? `<span class="cat-head-en">${esc(en)}</span>` : '';
   }
+  /* 檔口（＝分類）的官方點餐連結。AC2 部分檔口有自己的點餐店（categories.order_url），
+     其餘分類回空字串，不會多佔位。cls 決定用在分類標題列（cat-head-order）
+     還是「只看這個分類」時的獨立橫幅（order-link）。 */
+  function catOrderLink(cat, cls) {
+    if (!cat || !cat.orderUrl) return '';
+    return `<a class="${cls || 'order-link'}" href="${esc(cat.orderUrl)}" target="_blank" rel="noopener">${esc(I18N.t('stallOrdering'))}${icon('ext')}</a>`;
+  }
 
   /* ── 動效工具 ───────────────────────────── */
 
@@ -292,7 +299,6 @@
 
   function renderHero() {
     const { hd, kicker, dishLink, stamp } = heroPhotos();
-    const ac1 = DATA.dishes.filter((d) => d.canteenId === 'ac1').length;
     const enterAttr = heroEntered || reduceMotion() ? '' : ' data-enter';
     heroEntered = true;
     appEl.innerHTML = `
@@ -304,8 +310,8 @@
             <h1 class="hero-title">Eaty<i>.</i></h1>
             <p class="hero-tagline">${esc(I18N.t('heroTagline'))}</p>
             <p class="hero-note">${esc(I18N.lang() === 'zh'
-              ? `AC1 官方菜單已收錄 ${ac1} 項；AC2／AC3 為代表性菜品，陸續補充。`
-              : `AC1's official menu is fully listed (${ac1} items); AC2/AC3 entries are representative and growing.`)}</p>
+              ? `全站已收錄 ${DATA.dishes.length} 道菜、${DATA.canteens.length} 間食堂；菜單抄錄自官方點餐平台與現場菜牌。`
+              : `${DATA.dishes.length} dishes across ${DATA.canteens.length} canteens — transcribed from official ordering platforms and on-site menu boards.`)}</p>
             <div class="hero-actions">
               <button class="btn btn-ink" data-action="open-random">${icon('dice')}${esc(I18N.t('heroCta2'))}</button>
               <a class="btn btn-ghost" href="#/" data-scroll="canteens">${esc(I18N.t('heroCta1'))}</a>
@@ -521,7 +527,11 @@
     if (!dishes.length) {
       gridHtml = `<p class="empty-note">${esc(I18N.t('noResult'))}</p>`;
     } else if (f.cat) {
-      gridHtml = `<div class="dish-grid${enterCls}">${dishes.map((d, i) => dishCard(d, enter ? clamp(i, 0, 9) : undefined)).join('')}</div>`;
+      // 只看單一分類時沒有 .cat-head，檔口的點餐連結改掛在網格上方
+      const cat = catById(f.cat);
+      const orderBar = cat.orderUrl
+        ? `<div class="cat-order-bar">${catOrderLink(cat)}</div>` : '';
+      gridHtml = `${orderBar}<div class="dish-grid${enterCls}">${dishes.map((d, i) => dishCard(d, enter ? clamp(i, 0, 9) : undefined)).join('')}</div>`;
     } else {
       let seen = 0;
       gridHtml = mealCats.map((cat) => {
@@ -531,7 +541,7 @@
         seen += list.length;
         return `
           <div class="cat-group${enter ? ' enter' : ''}"${enter ? ` style="--gi:${clamp(base + 1, 0, 9)}"` : ''}>
-            <h3 class="cat-head">${esc(I18N.pick(cat))}${catHeadAlt(cat)}<i>${list.length}</i></h3>
+            <h3 class="cat-head">${esc(I18N.pick(cat))}${catHeadAlt(cat)}${catOrderLink(cat, 'cat-head-order')}<i>${list.length}</i></h3>
             <div class="dish-grid${enterCls}">${list.map((d, i) => dishCard(d, enter ? clamp(base + i, 0, 9) : undefined)).join('')}</div>
           </div>`;
       }).join('');

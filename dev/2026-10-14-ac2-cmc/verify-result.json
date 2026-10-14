@@ -1,0 +1,218 @@
+[
+  {
+    "vp": "desk",
+    "errs": [],
+    "source": "cloud",
+    "version": "0.8.0",
+    "heading": "食堂，一份覓食地圖。",
+    "cards": [
+      "城大食坊",
+      "AC2 Canteen",
+      "AC3 Bistro",
+      "CMC Cafe"
+    ],
+    "cardDishCounts": [
+      162,
+      75,
+      125,
+      18
+    ],
+    "totalDishes": 380,
+    "catCount": 83,
+    "usedCatCount": 73,
+    "dishTotal": 380,
+    "cardOrderBtns": [
+      "官方網上點餐",
+      "官方網上點餐"
+    ],
+    "nav": "Eaty\n.\n食堂\n避雷榜\n最新評論\nEN\n今天吃什麼",
+    "overflowHome": 0,
+    "cmcPhotoOk": true,
+    "ac2Chips": [
+      "全部 75",
+      "EURO GOURMET 7",
+      "開味小店 15",
+      "麻辣滾燙 4",
+      "西北麵館 8",
+      "餃餃陣 12",
+      "四季茶坊 24",
+      "拾味 5"
+    ],
+    "ac2HeadOrders": [
+      {
+        "txt": "網上點餐",
+        "href": "https://csd.order.place/home/store/312882"
+      },
+      {
+        "txt": "網上點餐",
+        "href": "https://csd.order.place/home/store/212882"
+      }
+    ],
+    "ac2ThePickHead": [
+      "拾味 THE PICK 5"
+    ],
+    "overflowAc2": 0,
+    "ac2HeadOrderBox": {
+      "x": 416.171875,
+      "y": 5046.625,
+      "width": 93.640625,
+      "height": 32
+    },
+    "ac2BrokenImgs": [],
+    "ac2Bar": [
+      {
+        "txt": "網上點餐",
+        "href": "https://csd.order.place/home/store/212882"
+      }
+    ],
+    "overflowAc2Cat": 0,
+    "thePickDishes": [
+      "$6 自選飯・細碗 Pick-Your-Own Rice · Small Bowl 還沒有評論——成為第一個說真話的人。",
+      "$10 自選飯・方碗 Pick-Your-Own Rice · Square Bowl 還沒有評論——成為第一個說真話的人。",
+      "$15 自選飯・中碟 Pick-Your-Own Rice · Medium Plate 還沒有評論——成為第一個說真話的人。",
+      "$18 自選飯・大碟 Pick-Your-Own Rice · Large Plate 還沒有評論——成為第一個說真話的人。",
+      "$21 自選飯・特大碟 Pick-Your-Own Rice · Extra-Large Plate 還沒有評論——成為第一個說真話的人。"
+    ],
+    "cmcName": "CMC Cafe",
+    "cmcBldg": "邵逸夫創意媒體中心 3 樓",
+    "cmcHours": "週一至五 08:00–20:00・週六 08:00–17:00（週日及公眾假期休息）",
+    "cmcMealTabs": [
+      "全日",
+      "早餐",
+      "午餐",
+      "晚餐"
+    ],
+    "cmcChips": [
+      "全部 18",
+      "意式三文治 5",
+      "墨西哥卷 5",
+      "本週精選 4",
+      "是日推介 4"
+    ],
+    "cmcCats": [
+      "意式三文治 PANINI 5",
+      "墨西哥卷 WRAPS 5",
+      "本週精選 WEEKLY HIGHLIGHTS 4",
+      "是日推介 DAILY SPECIALS 4"
+    ],
+    "cmcDishCount": 18,
+    "cmcBrokenImgs": [],
+    "overflowCmc": 0,
+    "cmcLunchCats": [
+      "意式三文治 PANINI 5",
+      "墨西哥卷 WRAPS 5",
+      "本週精選 WEEKLY HIGHLIGHTS 4",
+      "是日推介 DAILY SPECIALS 4"
+    ],
+    "cmcLunchDishCount": 18,
+    "errCount": 0
+  },
+  {
+    "vp": "mob",
+    "errs": [],
+    "source": "cloud",
+    "version": "0.8.0",
+    "heading": "食堂，一份覓食地圖。",
+    "cards": [
+      "城大食坊",
+      "AC2 Canteen",
+      "AC3 Bistro",
+      "CMC Cafe"
+    ],
+    "cardDishCounts": [
+      162,
+      75,
+      125,
+      18
+    ],
+    "totalDishes": 380,
+    "catCount": 83,
+    "usedCatCount": 73,
+    "dishTotal": 380,
+    "cardOrderBtns": [
+      "官方網上點餐",
+      "官方網上點餐"
+    ],
+    "nav": "Eaty\n.\nEN",
+    "overflowHome": 0,
+    "cmcPhotoOk": false,
+    "ac2Chips": [
+      "全部 75",
+      "EURO GOURMET 7",
+      "開味小店 15",
+      "麻辣滾燙 4",
+      "西北麵館 8",
+      "餃餃陣 12",
+      "四季茶坊 24",
+      "拾味 5"
+    ],
+    "ac2HeadOrders": [
+      {
+        "txt": "網上點餐",
+        "href": "https://csd.order.place/home/store/312882"
+      },
+      {
+        "txt": "網上點餐",
+        "href": "https://csd.order.place/home/store/212882"
+      }
+    ],
+    "ac2ThePickHead": [
+      "拾味 THE PICK 5"
+    ],
+    "overflowAc2": 0,
+    "ac2HeadOrderBox": {
+      "x": 257.28125,
+      "y": 5118.78125,
+      "width": 93.640625,
+      "height": 32
+    },
+    "ac2BrokenImgs": [],
+    "ac2Bar": [
+      {
+        "txt": "網上點餐",
+        "href": "https://csd.order.place/home/store/212882"
+      }
+    ],
+    "overflowAc2Cat": 0,
+    "thePickDishes": [
+      "$6 自選飯・細碗 Pick-Your-Own Rice · Small Bowl 還沒有評論——成為第一個說真話的人。",
+      "$10 自選飯・方碗 Pick-Your-Own Rice · Square Bowl 還沒有評論——成為第一個說真話的人。",
+      "$15 自選飯・中碟 Pick-Your-Own Rice · Medium Plate 還沒有評論——成為第一個說真話的人。",
+      "$18 自選飯・大碟 Pick-Your-Own Rice · Large Plate 還沒有評論——成為第一個說真話的人。",
+      "$21 自選飯・特大碟 Pick-Your-Own Rice · Extra-Large Plate 還沒有評論——成為第一個說真話的人。"
+    ],
+    "cmcName": "CMC Cafe",
+    "cmcBldg": "邵逸夫創意媒體中心 3 樓",
+    "cmcHours": "週一至五 08:00–20:00・週六 08:00–17:00（週日及公眾假期休息）",
+    "cmcMealTabs": [
+      "全日",
+      "早餐",
+      "午餐",
+      "晚餐"
+    ],
+    "cmcChips": [
+      "全部 18",
+      "意式三文治 5",
+      "墨西哥卷 5",
+      "本週精選 4",
+      "是日推介 4"
+    ],
+    "cmcCats": [
+      "意式三文治 PANINI 5",
+      "墨西哥卷 WRAPS 5",
+      "本週精選 WEEKLY HIGHLIGHTS 4",
+      "是日推介 DAILY SPECIALS 4"
+    ],
+    "cmcDishCount": 18,
+    "cmcBrokenImgs": [],
+    "overflowCmc": 0,
+    "cmcLunchCats": [
+      "意式三文治 PANINI 5",
+      "墨西哥卷 WRAPS 5",
+      "本週精選 WEEKLY HIGHLIGHTS 4",
+      "是日推介 DAILY SPECIALS 4"
+    ],
+    "cmcLunchDishCount": 18,
+    "errCount": 0
+  }
+]

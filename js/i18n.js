@@ -26,6 +26,7 @@
     dishesCount: { zh: '項菜品', en: ' dishes' },
     officialOrdering: { zh: '官方網上點餐', en: 'Official online ordering' },
     stallOrdering: { zh: '網上點餐', en: 'Order online' },
+    stallOrderingLabel: { zh: '檔口點餐', en: 'Stall ordering' },
     viewMenu: { zh: '查看菜單', en: 'View menu' },
     viewAll: { zh: '查看全部', en: 'See all' },
 

@@ -348,7 +348,7 @@
         <a class="canteen-card canteen-${c.color} reveal" href="#/canteen/${c.id}">
           ${c.photo ? `<figure><img src="${esc(c.photo)}" alt="${esc(I18N.lang() === 'zh' ? c.zh : c.en)}" loading="lazy"></figure>` : ''}
           <span class="canteen-card-body">
-            <span class="chip"><i class="dot"></i>${esc(c.short)}${I18N.lang() === 'zh' ? ` · ${esc(c.bldgZh)}` : ` · ${esc(c.bldgEn)}`}</span>
+            <span class="chip">${esc(c.short)}${I18N.lang() === 'zh' ? ` · ${esc(c.bldgZh)}` : ` · ${esc(c.bldgEn)}`}</span>
             <span class="canteen-card-name">
               <h3>${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</h3>
               <span>${esc(canteenAltName(c))}</span>
@@ -558,6 +558,24 @@
         </div>
       </div>` : '';
 
+    /* 標題區的「點餐入口」：
+       食堂自己有點餐站（AC1／AC3）→ 沿用原本那顆「官方網上點餐」。
+       食堂沒有、但底下的檔口有（AC2 的西北麵館／餃餃陣）→ 逐個檔口列一顆
+       「檔口名 ↗」膠囊，讓人在還沒往下滑之前就找得到點餐入口。
+       兩者都沒有（CMC）→ 整行不渲染，不留空位。 */
+    const orderStalls = DATA.categories.filter(
+      (cat) => cat.orderUrl && allDishes.some((d) => d.cat === cat.id),
+    );
+    let orderRow = '';
+    if (c.orderUrl) {
+      orderRow = `<a class="order-link" href="${esc(c.orderUrl)}" target="_blank" rel="noopener">${esc(I18N.t('officialOrdering'))}${icon('ext')}</a>`;
+    } else if (orderStalls.length) {
+      orderRow = `<p class="canteen-order-stalls">
+                <span class="cos-label">${esc(I18N.t('stallOrderingLabel'))}</span>
+                ${orderStalls.map((cat) => `<a class="cat-head-order" href="${esc(cat.orderUrl)}" target="_blank" rel="noopener">${esc(I18N.pick(cat))}${icon('ext')}</a>`).join('')}
+              </p>`;
+    }
+
     // 注意下方菜品列表：.wrap 一定要寫成 .section 的「子元素」。
     // 兩者疊在同一顆上時，.section{padding:96px 0 88px} 的 padding 簡寫
     // 會整個蓋掉 .wrap 的左右 64px 內距 → 卡片貼齊畫面邊緣。
@@ -570,11 +588,11 @@
               ? `<figure class="canteen-band-photo"><img src="${esc(c.photo)}" alt="${esc(I18N.lang() === 'zh' ? c.zh : c.en)}"></figure>`
               : `<figure class="canteen-band-photo"><div class="dish-ph"><span class="dish-ph-glyph">${esc(c.short)}</span></div></figure>`}
             <div class="canteen-band-copy">
-              <span class="chip"><i class="dot"></i>${esc(c.short)} · ${esc(I18N.lang() === 'zh' ? c.en : c.zh)}</span>
+              <span class="chip">${esc(c.short)} · ${esc(I18N.lang() === 'zh' ? c.en : c.zh)}</span>
               <h1 class="canteen-name">${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</h1>
               <p class="canteen-bldg">${icon('pin')}${esc(I18N.lang() === 'zh' ? c.bldgZh : c.bldgEn)}</p>
               <p class="canteen-hours">${icon('clock')}${esc(I18N.lang() === 'zh' ? c.hoursZh : c.hoursEn)}</p>
-              ${c.orderUrl ? `<a class="order-link" href="${esc(c.orderUrl)}" target="_blank" rel="noopener">${esc(I18N.t('officialOrdering'))}${icon('ext')}</a>` : ''}
+              ${orderRow}
               <div class="canteen-stats">
                 ${ratedAll.length ? `<span class="big">${bandAvg.toFixed(1)}<small>★</small></span>` : ''}
                 ${totalReviews ? `<span class="rating-line"><span class="count">${reviewCountText(totalReviews)}</span></span>` : ''}
@@ -700,7 +718,7 @@ ${mealBar}
             <span class="price-tag"><span class="p">${fmtPrice(d.price)}</span></span>
           </figure>
           <div class="dish-modal-info">
-            <span class="chip dish-modal-canteen canteen-${c.color}"><i class="dot"></i>${esc(canteenFullName(c))}</span>
+            <span class="chip dish-modal-canteen canteen-${c.color}">${esc(canteenFullName(c))}</span>
             <div>
               <h2 class="dish-modal-name">${esc(I18N.pick(d))}</h2>
               <p class="dish-modal-en">${esc(I18N.lang() === 'zh' ? d.en : d.zh)}</p>

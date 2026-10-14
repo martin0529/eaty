@@ -138,16 +138,15 @@ button.chip:active{transform:scale(.94)}
 .chip-on{background:var(--red);color:#fff}
 .chip-on i{color:rgba(255,255,255,.65)}
 .chip.is-pop{animation:chipPop var(--dur-3) var(--ease-back)}
-.dot{width:8px;height:8px;border-radius:50%;flex:none}
-.dot-ac1{background:var(--ac1)}
-.canteen-ac1 .dot{background:var(--ac1)}
-.dot-ac2{background:var(--ac2)}
-.canteen-ac2 .dot{background:var(--ac2)}
-.dot-ac3{background:var(--ac3)}
-.canteen-ac3 .dot{background:var(--ac3)}
-.canteen-ac1{--dot:var(--ac1)}
-.canteen-ac2{--dot:var(--ac2)}
-.canteen-ac3{--dot:var(--ac3)}
+/* ⚠️ 2026-10-14 移除一組「食堂色點」的殘骸：
+   原本這裡有 .dot-ac1／.canteen-ac1 .dot／.canteen-ac1{--dot} 等 9 條規則，
+   但 --ac1／--ac2／--ac3 這個 fork 從頭到尾沒有定義過（全 repo 搜不到 `--ac1:`），
+   所以 background:var(--ac1) 一律解析成「透明」—— 也就是說 chip 裡那顆 <i class="dot">
+   是「看不見、卻仍佔 8px 寬 + 7px flex gap」的空位，把標籤整體往右推 15px，
+   看起來就像文字沒有置中（食堂頁標題膠囊實測：左 28px／右 13px）。
+   現在 markup 裡的 <i class="dot"> 已全部拿掉，膠囊文字回到真正置中。
+   .dot 這條留著：圖示裡的骰子（dice）用 class="dot" 標記四個點數。 */
+.dot{width:8px;height:8px;border-radius:50%;flex:none;fill:currentColor}
 
 .badge{display:inline-flex;align-items:center;border-radius:999px;font:700 12px/1 var(--sans);padding:6px 12px;letter-spacing:.04em;white-space:nowrap}
 .badge-must{background:var(--red);color:#fff}
@@ -463,6 +462,11 @@ button.chip:active{transform:scale(.94)}
 .order-link .icn{transition:transform var(--dur-3) var(--ease)}
 .order-link:hover{text-decoration:underline}
 .order-link:hover .icn{transform:translate(2px,-2px)}
+/* 食堂本身沒有點餐站、但底下檔口有（AC2：西北麵館／餃餃陣）時，
+   在標題區（時段行與統計列之間）列一排「檔口名 ↗」。
+   膠囊沿用 .cat-head-order，讓「網上點餐」在標題區與分類標題列長得一模一樣。 */
+.canteen-order-stalls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.canteen-order-stalls .cos-label{font:700 11px/1 var(--disp);letter-spacing:.1em;color:var(--meta)}
 .canteen-stats{display:flex;align-items:center;gap:16px;margin-top:18px;flex-wrap:wrap}
 .canteen-stats .big{font:800 28px/1 var(--disp)}
 .canteen-stats .big small{font:700 13px/1 var(--disp);color:var(--meta);margin-left:3px}
@@ -803,9 +807,11 @@ button.chip:active{transform:scale(.94)}
 
 /* ── 響應式 ── */
 @media (max-width:1180px){
-  .wrap{padding:0 40px}
-  .filter-bar-row{padding:12px 40px}
-  .meal-bar{padding:12px 40px 11px}
+  /* 平板（iPad 橫向 ~1024–1180）不再把左右留白縮到 40px。
+     40px 在 1024px 上只有 3.9%，頁尾那塊滿版紅底的文字看起來像貼著螢幕邊
+     （2026-10-14 使用者回報「頁尾邊界太小」）。這裡直接沿用桌機的 64px，
+     規則簡化成「左右 64px，只有手機（≤760px）才縮到 22px」。
+     .filter-bar-row／.meal-bar 一起拿掉覆寫，否則會跟 .wrap 的內距對不齊。 */
   .bowl{width:440px;height:440px;top:96px;right:12px}
   .chili-1{right:640px}
   .sp-1{right:520px}

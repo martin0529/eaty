@@ -129,6 +129,11 @@ main:focus{outline:none}
 .chip i{font-style:normal;font:600 11px/1 var(--disp);color:var(--meta)}
 button.chip{transition:background var(--dur-2) var(--ease),color var(--dur-2) var(--ease),transform var(--dur-1) var(--ease)}
 button.chip:hover{background:var(--tile)}
+/* ⚠️ 已選中的 chip 一定要壓過上面那條 hover 規則。
+   button.chip:hover 的優先度 (0,2,1) 高於 .chip-on (0,1,0)，若不覆蓋，
+   滑鼠移到已選中的 chip 上會變成「淺灰底 + 白字」＝文字隱形（2026-10-14 實測確認）。
+   hover 時改用更深的紅，回饋仍在。 */
+button.chip.chip-on:hover{background:var(--red-deep)}
 button.chip:active{transform:scale(.94)}
 .chip-on{background:var(--red);color:#fff}
 .chip-on i{color:rgba(255,255,255,.65)}
@@ -702,7 +707,14 @@ button.chip:active{transform:scale(.94)}
 .random-modal{width:min(520px,calc(100vw - 32px));padding:40px 36px 32px;text-align:center;overflow:hidden}
 .random-title{font:900 26px/1.25 var(--sans)}
 .random-sub{font-size:13px;color:var(--meta);margin:8px 0 18px}
-.random-scopes{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+/* 兩排篩選（範圍／時段）：左邊小標籤 + 右邊膠囊，窄螢幕時膠囊自動換到下一行 */
+.random-filters{display:flex;flex-direction:column;gap:11px;margin-bottom:22px}
+.random-filter-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.random-filter-label{flex:none;font:700 11px/1 var(--disp);letter-spacing:.1em;color:var(--meta)}
+.random-scopes,.random-meals{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+/* 這個範圍內該時段一道菜都沒有 → 禁用（例如 AC2 冇早餐）。禁用鈕不會觸發 click，天然擋掉。 */
+.random-meals .chip:disabled{opacity:.3;cursor:not-allowed}
+.random-meals .chip:disabled:hover{background:var(--soft);color:var(--ink-soft)}
 .random-stage{
   position:relative;background:var(--soft);border-radius:20px;padding:34px 20px;margin-bottom:20px;
   min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;

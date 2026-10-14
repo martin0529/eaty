@@ -838,18 +838,54 @@ ${mealBar}
     const m = window.CityuEatsMenu;
     return (m && m.rollBlacklist) || { dishes: new Set(), categories: new Set() };
   }
-  function rollPool(scopeId) {
+
+  /**
+   * 抽籤池 ＝ 範圍（食堂）× 時段（餐段）− 黑名單。
+   * meal 為空＝不限時段。時段判斷跟食堂頁的餐段頁籤同一套：看「菜品所屬分類」的 meal。
+   */
+  function rollPool(scopeId, meal) {
     const bl = rollBlacklist();
     return DATA.dishes.filter((d) => (!scopeId || d.canteenId === scopeId)
+      && (!meal || catInMeal(catById(d.cat), meal))
       && !bl.categories.has(d.cat) && !bl.dishes.has(d.id));
   }
 
-  /** 把「可抽 N 道菜」寫進 modal；池是空的時候直接鎖住按鈕，免得按下去毫無反應。 */
+  /** 目前 modal 裡選中的「範圍」與「時段」——直接讀 DOM，跟原本 scope 的做法一致。 */
+  function rollSelection() {
+    const s = modalRoot.querySelector('.random-scopes .chip-on');
+    const m = modalRoot.querySelector('.random-meals .chip-on');
+    return { scopeId: s ? s.getAttribute('data-id') : '', meal: m ? m.getAttribute('data-id') : '' };
+  }
+
+  /**
+   * 把「可抽 N 道菜」寫進 modal；池是空的時候直接鎖住按鈕，免得按下去毫無反應。
+   * 同時更新時段 chips：某食堂該時段一道菜都沒有（例如 AC2 冇早餐）→ 變灰禁用；
+   * 若原本選中的時段在新範圍下變空，自動退回「全日」，免得卡在一個 0 道的池。
+   */
   function syncRollPool() {
     const el = document.getElementById('random-pool');
+    const mealsEl = modalRoot.querySelector('.random-meals');
+    const { scopeId } = rollSelection();
+
+    // 先算「這個範圍、不分時段」有幾道 —— 作為各時段 chip 的基準
+    const scopePool = rollPool(scopeId, '');
+    if (mealsEl) {
+      mealsEl.querySelectorAll('.chip').forEach((chip) => {
+        const m = chip.getAttribute('data-id');
+        const n = m ? scopePool.filter((d) => catInMeal(catById(d.cat), m)).length : scopePool.length;
+        chip.classList.toggle('is-off', !n);
+        chip.disabled = !n;
+      });
+      const on = mealsEl.querySelector('.chip-on');
+      if (on && on.disabled) {                       // 選中的時段沒菜了 → 退回全日
+        on.classList.remove('chip-on');
+        const all = mealsEl.querySelector('.chip[data-id=""]');
+        if (all) all.classList.add('chip-on');
+      }
+    }
+
     if (!el) return;
-    const scope = modalRoot.querySelector('.random-scopes .chip-on');
-    const n = rollPool(scope ? scope.getAttribute('data-id') : '').length;
+    const n = rollPool(scopeId, rollSelection().meal).length;
     el.textContent = n ? I18N.t('randomPool').replace('{n}', n) : I18N.t('randomPoolEmpty');
     el.classList.toggle('is-empty', !n);
     const btn = document.getElementById('roll-btn');
@@ -867,9 +903,21 @@ ${mealBar}
         <button class="modal-close" data-action="close-modal" aria-label="${esc(I18N.t('close'))}">${icon('close')}</button>
         <h2 class="random-title">${esc(I18N.t('randomTitle'))}</h2>
         <p class="random-sub">${esc(I18N.t('randomSub'))}</p>
-        <div class="random-scopes" role="radiogroup" aria-label="${esc(I18N.t('randomTitle'))}">
-          <button class="chip chip-on" data-action="set-scope" data-id="">${esc(I18N.t('randomScopeAll'))}</button>
-          ${DATA.canteens.map((c) => `<button class="chip" data-action="set-scope" data-id="${c.id}">${esc(c.short)}</button>`).join('')}
+        <div class="random-filters">
+          <div class="random-filter-row">
+            <span class="random-filter-label">${esc(I18N.t('randomScopeLabel'))}</span>
+            <div class="random-scopes" role="radiogroup" aria-label="${esc(I18N.t('randomScopeLabel'))}">
+              <button class="chip chip-on" data-action="set-scope" data-id="">${esc(I18N.t('randomScopeAll'))}</button>
+              ${DATA.canteens.map((c) => `<button class="chip" data-action="set-scope" data-id="${c.id}">${esc(c.short)}</button>`).join('')}
+            </div>
+          </div>
+          <div class="random-filter-row">
+            <span class="random-filter-label">${esc(I18N.t('randomMealLabel'))}</span>
+            <div class="random-meals" role="radiogroup" aria-label="${esc(I18N.t('randomMealLabel'))}">
+              <button class="chip chip-on" data-action="set-roll-meal" data-id="">${esc(I18N.t('mealAll'))}</button>
+              ${MEALS.map((m) => `<button class="chip" data-action="set-roll-meal" data-id="${m}">${esc(I18N.t(MEAL_KEY[m]))}</button>`).join('')}
+            </div>
+          </div>
         </div>
         <div class="random-stage" aria-live="polite">
           <div class="random-dish" id="random-dish">
@@ -897,9 +945,8 @@ ${mealBar}
     const actions = document.getElementById('random-actions');
     if (!btn || !flip) return;
 
-    const scope = modalRoot.querySelector('.random-scopes .chip-on');
-    const scopeId = scope ? scope.getAttribute('data-id') : '';
-    const pool = rollPool(scopeId);
+    const { scopeId, meal } = rollSelection();
+    const pool = rollPool(scopeId, meal);
     if (!pool.length) return;      // 池被黑名單排除光了——按鈕早已鎖住，這裡只是保險
 
     const animated = !reduceMotion();
@@ -1284,7 +1331,12 @@ ${mealBar}
       modalRoot.querySelectorAll('.random-scopes .chip').forEach((c) => c.classList.remove('chip-on'));
       actionEl.classList.add('chip-on');
       popOnce(actionEl, 400);
-      syncRollPool();                  // 換了食堂，可抽數目跟著變
+      syncRollPool();                  // 換了食堂，可抽數目跟著變（順便重算哪些時段有菜）
+    } else if (action === 'set-roll-meal') {
+      modalRoot.querySelectorAll('.random-meals .chip').forEach((c) => c.classList.remove('chip-on'));
+      actionEl.classList.add('chip-on');
+      popOnce(actionEl, 400);
+      syncRollPool();                  // 換了時段，可抽數目跟著變
     } else if (action === 'chips-prev' || action === 'chips-next') {
       scrollChips(action === 'chips-next' ? 1 : -1);
     } else if (action === 'set-meal') {

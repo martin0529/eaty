@@ -44,7 +44,9 @@
 
     /* 隨機器 */
     randomTitle: { zh: '今天吃什麼？', en: 'What to eat today?' },
-    randomSub: { zh: '選擇範圍，按下按鈕，交給命運。', en: 'Pick a scope, hit the button, leave it to fate.' },
+    randomSub: { zh: '選好範圍與時段，按下按鈕，交給命運。', en: 'Pick a scope and a meal, hit the button, leave it to fate.' },
+    randomScopeLabel: { zh: '範圍', en: 'Scope' },
+    randomMealLabel: { zh: '時段', en: 'Meal' },
     randomScopeAll: { zh: '食堂', en: 'All canteens' },
     randomRoll: { zh: '開始！', en: 'Roll!' },
     randomRolling: { zh: '選擇中…', en: 'Rolling…' },

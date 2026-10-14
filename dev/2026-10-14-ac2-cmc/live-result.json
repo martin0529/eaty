@@ -1,0 +1,66 @@
+[
+  {
+    "vp": "desk",
+    "version": "0.8.0",
+    "source": "cloud",
+    "heading": "食堂，一份覓食地圖。",
+    "nav": "",
+    "heroNote": "全站已收錄 346 道菜、3 間食堂；菜單抄錄自官方點餐平台與現場菜牌。",
+    "cards": [
+      "城大食坊",
+      "AC2 Canteen",
+      "AC3 Bistro"
+    ],
+    "totalDishes": 346,
+    "usedCats": 68,
+    "overflowHome": 0,
+    "hasCmc": false,
+    "hasThePick": false,
+    "stallOrderUrls": [],
+    "ac2Chips": [
+      "全部 59",
+      "EURO GOURMET 7",
+      "開味小店 13",
+      "麻辣滾燙 3",
+      "西北麵館 6",
+      "餃餃陣 6",
+      "四季茶坊 24"
+    ],
+    "ac2HeadOrders": [],
+    "overflowAc2": 0,
+    "errCount": 0,
+    "errs": []
+  },
+  {
+    "vp": "mob",
+    "version": "0.8.0",
+    "source": "cloud",
+    "heading": "食堂，一份覓食地圖。",
+    "nav": "",
+    "heroNote": "全站已收錄 346 道菜、3 間食堂；菜單抄錄自官方點餐平台與現場菜牌。",
+    "cards": [
+      "城大食坊",
+      "AC2 Canteen",
+      "AC3 Bistro"
+    ],
+    "totalDishes": 346,
+    "usedCats": 68,
+    "overflowHome": 0,
+    "hasCmc": false,
+    "hasThePick": false,
+    "stallOrderUrls": [],
+    "ac2Chips": [
+      "全部 59",
+      "EURO GOURMET 7",
+      "開味小店 13",
+      "麻辣滾燙 3",
+      "西北麵館 6",
+      "餃餃陣 6",
+      "四季茶坊 24"
+    ],
+    "ac2HeadOrders": [],
+    "overflowAc2": 0,
+    "errCount": 0,
+    "errs": []
+  }
+]

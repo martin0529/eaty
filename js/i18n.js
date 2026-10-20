@@ -127,8 +127,8 @@
       en: 'CityU eating starts with Eaty — menus, reviews and avoid-list intel for every canteen, at a glance.',
     },
     footerNote: {
-      zh: '學生自製網站，非官方，與香港城市大學無從屬關係。菜單最後更新：2026-10-14（AC1 抄錄自官方點餐站，AC2 現場菜單整理、兩個檔口抄錄自官方點餐平台，AC3 抄錄自官方點餐平台，CMC Cafe 抄錄自現場菜單牌）；價錢以食堂現場為準。',
-      en: 'A student-built, unofficial site, not affiliated with CityU. Menu last updated 2026-10-14 (AC1 from the official ordering site; AC2 from the on-site menu boards, with two stalls from the official ordering platform; AC3 from the official ordering platform; CMC Cafe from the on-site menu board); prices at the counter apply.',
+      zh: '學生自製網站，非官方，與香港城市大學無從屬關係。菜單最後更新：2026-10-20（AC1 抄錄自官方點餐站，AC2 現場菜單整理、三個檔口（含四季茶坊飲品）抄錄自官方點餐平台，AC3 抄錄自官方點餐平台，CMC Cafe 抄錄自現場菜單牌）；價錢以食堂現場為準。',
+      en: 'A student-built, unofficial site, not affiliated with CityU. Menu last updated 2026-10-20 (AC1 from the official ordering site; AC2 from the on-site menu boards, with three stalls — including the tea house drinks — from the official ordering platform; AC3 from the official ordering platform; CMC Cafe from the on-site menu board); prices at the counter apply.',
     },
     footerPhotoNote: {
       zh: '部分圖片取自網上圖庫，僅供參考，非實際商品照。',
@@ -139,8 +139,8 @@
       en: 'This menu is hand-copied and is not exhaustive — it does not cover every stall, limited-time item, or daily special. Dishes, prices and availability may change; the canteen counter always takes precedence.',
     },
     footerUpdated: {
-      zh: '最後更新 2026-10-14',
-      en: 'Last updated 2026-10-14',
+      zh: '最後更新 2026-10-20',
+      en: 'Last updated 2026-10-20',
     },
     footerSamplesHidden: { zh: '隱藏範例評論', en: 'Hide sample reviews' },
     footerSamplesShown: { zh: '顯示範例評論', en: 'Show sample reviews' },

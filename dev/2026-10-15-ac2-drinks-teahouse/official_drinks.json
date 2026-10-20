@@ -1,0 +1,687 @@
+{
+ "official": [
+  {
+   "series": "美式系列",
+   "series_en": "Fruity Iced Americano Series",
+   "zh": "甜橙美式",
+   "en": "Iced Orange Americano",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/Zn4sHSBPUfENzAe83eixMLwxMnrfgv2shHbSE7cDlmAviZ2LIBIBM2L9Fwp7OAe3rp8rgF0Sm71WS-rAeZouQf2EqiHxTxQemQGSt1DPBA",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024527"
+  },
+  {
+   "series": "美式系列",
+   "series_en": "Fruity Iced Americano Series",
+   "zh": "白桃美式",
+   "en": "Iced White Peach Americano",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/i7zVtfMCzMAWtawOwtRj_0x7dV1S_Yr-SVUULIbv8XltcgVeOjW7IL8iaCmZy80tFcyVz6Cgi5TO0zC7vC3wrEWYze53ArxiuSIGjQJ1",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024528"
+  },
+  {
+   "series": "美式系列",
+   "series_en": "Fruity Iced Americano Series",
+   "zh": "粉荔美式",
+   "en": "Iced Lychee Americano",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/ZPYF3Z1xn9RfU4w0OoL2iaDzADMr_QfrXEl9D8pqTkDWMmKS8sR_aa9__znUUXOzV5LBk6bIWef86mxaZbtuGvnzj8Y-WVA1Hf5Sy7A",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024529"
+  },
+  {
+   "series": "美式系列",
+   "series_en": "Fruity Iced Americano Series",
+   "zh": "富士蘋果美式",
+   "en": "Iced Fuji Apple Americano",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/NzvLe--Jbws3fmMCdTYEX4Bi17_bwvK8syTAePfgidczsf_pYT6hSKzNjwzou8UABoQBxSaV0eTVTalXw_EyL0ginka1gMixfm_KfWU8",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024530"
+  },
+  {
+   "series": "美式系列",
+   "series_en": "Fruity Iced Americano Series",
+   "zh": "凍美式咖啡",
+   "en": "Iced Caffe Americano",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/Wwb0cATKlciTi4WDSmDiJmf4ft9EJZX0DoLB5TLcLELpyzXCNDN-KPnNtPfnzpyv2uWjhSdj2hft4DIAqT16NSK90Q2H0tigq5XGRRuq",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100020589"
+  },
+  {
+   "series": "檸香系列",
+   "series_en": "Fruity Iced Lemon Tea",
+   "zh": "甜橙梔香檸茶",
+   "en": "Orange Perfume Lemon Gardenia Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/QK2CZX5e1DZA7FTQIWp9yjKmjh4v61egwdIRnYBpjto3piw4N9M-YR_IuNdsSvapx0j6AXSYwUl_AVRQliIkixwziw9Xbbbc3gCKwDI",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024531"
+  },
+  {
+   "series": "檸香系列",
+   "series_en": "Fruity Iced Lemon Tea",
+   "zh": "白桃梔香檸檬茶",
+   "en": "White Peach Perfume Lemon Gardenia Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/JnzF1CteBYL66Cs_2E5XVcwDsZ5LCTrU7Lud5v4NnYadT5vEY3WaUhyUdMq5E_v8v0uSuCM_w42zD_Jm-Hp7h4B8ISO-OE0WaEZ8Q9QAGw",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024532"
+  },
+  {
+   "series": "檸香系列",
+   "series_en": "Fruity Iced Lemon Tea",
+   "zh": "粉荔梔香檸檬茶",
+   "en": "Lychee Perfume Lemon Gardenia Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/A5a7XW7YxHCgkO9k4KSNwCkssTpUMWiEAdWjjQ3fi73VQgY1G9DGtV-UDJLv4pbNA5s_1isZCFDe-xXLp8nqOb-rnrR81ilSd23rEG-C",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024533"
+  },
+  {
+   "series": "檸香系列",
+   "series_en": "Fruity Iced Lemon Tea",
+   "zh": "富士蘋果梔香檸檬茶",
+   "en": "Fuji Apple Perfume Lemon Gardenia Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/xGm5jdIu1POl86GRfnrUo8RQ4EWV1yWbHslwYbTqLRPZx9X7SSLg723LS19W4bpZiESBrRShcID0t_1qjjakP3Nnab5vSgNCpdflgGJM",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024534"
+  },
+  {
+   "series": "檸香系列",
+   "series_en": "Fruity Iced Lemon Tea",
+   "zh": "梔香檸檬茶",
+   "en": "Perfume Lemon Gardenia Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/nYZstGd90fcQRJYNrAFu5sLassPzdp1dK6_aA8FBDF2H7SKwRRlRnehqthrXsRmQfcSlTP1KVS6dic2dZ5PXhJ0DjEF1G8-3sdT9bao",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024535"
+  },
+  {
+   "series": "檸香系列",
+   "series_en": "Fruity Iced Lemon Tea",
+   "zh": "芭樂茉莉檸檬茶",
+   "en": "Guava Jasmine Lemon Tea",
+   "price": 19.0,
+   "img": "https://content.aigens.com/image/uHxFyPzJLSGl1vVATG4-vJwjQ6uJ5Ze7ffcZH0cWuVw=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024733"
+  },
+  {
+   "series": "香檳系列",
+   "series_en": "Fruity Iced Sparkling Jasmine Green Tea",
+   "zh": "水蜜桃茉莉香檳",
+   "en": "White Peach Sparkling Jasmine Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/viQ6vAp_Kg4vss49w0j4fRFxf9J5MHb0vicrSaP2NIbfhuf3A5NHbQXRXVCpyqEtYv_V9_Tn0ijzGmb4QIgwKWn-IiKrkeI-B-FCagsW",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024546"
+  },
+  {
+   "series": "香檳系列",
+   "series_en": "Fruity Iced Sparkling Jasmine Green Tea",
+   "zh": "百香果茉莉香檳",
+   "en": "Passion Fruit Sparkling Jasmine Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/A0YaKgYV6xCigVTSWY4t12PdVcHUdklmuX9gde01I_qfaW8Mv7FiOymNSOUGgn55U9aIbaLFK6N4pCgVMdQDHmd2KQ4suSA9gDwpI16ueQ",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024547"
+  },
+  {
+   "series": "香檳系列",
+   "series_en": "Fruity Iced Sparkling Jasmine Green Tea",
+   "zh": "青提茉莉香檳",
+   "en": "Green Grape Sparkling Jasmine Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/iHfigYHV2hPfvuQDiCxygiTB1ocywUQuOC_eI4GNsIf5m2BOk81Spok_8gC7iTCEfjLTNK2rU6QAjG0Y9OwhsTrYpLq4nYFrVhPDr9Q_LQ",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024548"
+  },
+  {
+   "series": "香檳系列",
+   "series_en": "Fruity Iced Sparkling Jasmine Green Tea",
+   "zh": "紅葡茉莉香檳",
+   "en": "Red Grape Sparkling Jasmine Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/4RAnC1OfaOPWM0DEGQUU-KsW5SB2OSNdgJK4SrTA26FdB9RqIiLTCn8iGisyH3mQ8wv3s61AmwNAyECMQKxMOIWXvMpFj_yj-Zk7XktD",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024549"
+  },
+  {
+   "series": "香檳系列",
+   "series_en": "Fruity Iced Sparkling Jasmine Green Tea",
+   "zh": "香水檸檬茉莉香檳",
+   "en": "Perfume Lemon Sparkling Jasmine Green Tea",
+   "price": 19.0,
+   "img": "https://lh3.googleusercontent.com/qAMmkZp2hH-Mahhvcxa1WzWO6ezRHSBAp5O0C27e8eLweKGU8jusOjKXHqLcBKYhlbRbEp7-SUSAbDFiz8SWwOhARvP-o8YA6tcxAl1b",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024550"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "紅芭樂梳打",
+   "en": "red guava soda",
+   "price": 19.0,
+   "img": "https://content.aigens.com/image/tmOdfD4lFB9MZ7HCKaDriAfR89HOlswAmxLbJaqHjYo=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100023215"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "熱咖啡",
+   "en": "Hot Coffee",
+   "price": 6.0,
+   "img": "https://lh3.googleusercontent.com/lEoI74AKZzQ9Ui2zDbe9UGdofKAAnDCKGLFMOo8T6WTqTZ_eLYJnzP4enXv_USHWHd2rIEiayB2JxMA7ZbF1HvwyDFAkQtX6vIirF9I5",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020003"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "熱黑咖啡",
+   "en": "Hot Black Coffee",
+   "price": 6.0,
+   "img": "https://content.aigens.com/image/WtQRWJ065du6fdWLtyseB8dM9fHwvfZ7RsprD3gdjcc=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100024287"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "熱奶茶",
+   "en": "Hot Milk Tea",
+   "price": 6.0,
+   "img": "https://lh3.googleusercontent.com/2nSzPaKiVG3ioxYL7Gz4A_IGgIhwok-SMjGNCsmIxflShDJMvx6O2T5aGZwPBcSCm034FFS1Xc_yaps_LWSrCBWMAR7fsBH73y7u4nY",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020004"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "熱鴛鴦",
+   "en": "Hot Coffee and Tea Mix",
+   "price": 6.0,
+   "img": "https://content.aigens.com/image/Unw_co_z-jw72K5vhXgcD4DfN89PXfQn42ny46uY38k=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020005"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "熱檸檬茶",
+   "en": "Hot Lemon Tea",
+   "price": 6.0,
+   "img": "https://content.aigens.com/image/rKZ81h_LN1FF2E6AnKZ5k6Zn6B6UX40nlXaTHuWyQOI=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020007"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "熱檸檬水",
+   "en": "Hot Lemon Water",
+   "price": 6.0,
+   "img": "https://content.aigens.com/image/fKA6oMemBurxQjYdJgEUOR9bldBb_SdeEb4AHdKGUj0=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020008"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "熱好立克",
+   "en": "Hot Horlicks",
+   "price": 6.0,
+   "img": "https://lh3.googleusercontent.com/n1vpZb5wmO2vGAV3JYr-fJaWzCLoHUOPMpcFlXT3ublG67gtkGWXGXhnHdL1jqaW75EFcjmXsNCCNfdMWHOMdJqCXovP13yDZvauo00",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020009"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "熱阿華田",
+   "en": "Hot Ovaltine",
+   "price": 6.0,
+   "img": "https://content.aigens.com/image/ghnmX6Go1Z5O-9jiJhnlPv4KyZMuZRnsymKgu167uCw=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020010"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "凍咖啡",
+   "en": "Iced Coffee",
+   "price": 7.5,
+   "img": "https://content.aigens.com/image/phajhb6PJ8QeAlyy1hrwXNVECKx7nIe3FcGc7Q0rWII=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020016"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "凍黑咖啡",
+   "en": "Iced Hot Black Coffe",
+   "price": 7.5,
+   "img": "https://content.aigens.com/image/AgOf20zJWNpC9uTj_lq0TGjA5kr-OE5LdNCcsy1xrYY=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100024290"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "凍奶茶",
+   "en": "Iced Milk Tea",
+   "price": 7.5,
+   "img": "https://content.aigens.com/image/21gqGuetP4iMvWj9heRYZjkaf1wH3FKADZw_DPy8EZw=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020017"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "凍鴛鴦",
+   "en": "Iced Coffee and Tea",
+   "price": 7.5,
+   "img": "https://content.aigens.com/image/U8zafs41kDGqhxt5u0tQz-QTRV5Unj9YPHhBYjhDi84=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020018"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "凍檸檬茶",
+   "en": "Iced Lemon Tea",
+   "price": 7.5,
+   "img": "https://lh3.googleusercontent.com/FknYaFyUGbpxo45yHvL304D6WiVSR6pr7I0ZWeoi0nGIM-Ko1MOZEDCnQtxo1re_uBVjfzOPD9hyopFyowU2jTcipavGE9NLsRPzIiH4",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020020"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "凍檸檬水",
+   "en": "Iced Lemon Water",
+   "price": 7.5,
+   "img": "https://content.aigens.com/image/Xxta3yhim-09BuhH2T2maJj_lqdZ3enS6bWi-XI4i9M=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020021"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "凍好立克",
+   "en": "Iced Horlicks",
+   "price": 7.5,
+   "img": "https://content.aigens.com/image/IzxwqtGhRwuycA7eoSxz1a118xMMOuAhatYCle-tlKU=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020022"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "凍阿華田",
+   "en": "Iced Ovaltine",
+   "price": 7.5,
+   "img": "https://lh3.googleusercontent.com/viGqiRklmJYWsCOEzYGUnXUrvy5lu9lY-ocuGjSa07UZuK3oS8MbseP3xu9cSojaMvi9JA1W8WhkooX5eUgeK0YJ_ajs_KcQar-vX3J0Sg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020023"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "酸梅湯",
+   "en": "Sour Plum Tea",
+   "price": 10.0,
+   "img": "https://lh3.googleusercontent.com/Zwz2Lj2RJSN8HDlahjhnl4okLbOnlTtHJk3pc1J8hNfxtTHGroKKFZbup_1AO1E_BqQbj2N8lm_E0THBOWAKDiGQsGMXRsixllZ7o-_Y",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100022189"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "百事",
+   "en": "Pepsi",
+   "price": 6.0,
+   "img": "https://lh3.googleusercontent.com/iZ9MHfhYVhvbwin6JuMdJ8MUy5sHmIF4il94hfH6mjA5rlSuodrHjahEnDxR9_obN33jAj_Rw9s4LAomQ3aYz6U5xARkM_d61RHeci0",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020111"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "輕怡百事",
+   "en": "Pepsi Light",
+   "price": 6.0,
+   "img": "https://lh3.googleusercontent.com/7JIUUt6pVfv-nPiV14QyO8SVEEokD6oh3nf1w9d-pYP4wW1vxaUjvXgQT47L_koZFsOiyfEmLe3hh9EaO4XlZtby9aBtgvvWa9b0fzGJkA",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020112"
+  },
+  {
+   "series": "基本飲品",
+   "series_en": "Beverage",
+   "zh": "七喜",
+   "en": "7up",
+   "price": 6.0,
+   "img": "https://content.aigens.com/image/Qs3KYGm5dL81Os4fOxg4EPXmyWejKmAny4EaI8DnSZ8=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020113"
+  },
+  {
+   "series": "包裝飲品",
+   "series_en": "Pack Drinks",
+   "zh": "紅牛",
+   "en": "Red Bull Energy Drink",
+   "price": 18.0,
+   "img": "https://content.aigens.com/image/IfQWceJyuLlQTqAm-hbor8P5pJca_-zPBmuiFLvYe0Q=w512.png",
+   "img_w": 869,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100020153"
+  },
+  {
+   "series": "包裝飲品",
+   "series_en": "Pack Drinks",
+   "zh": "無糖紅牛",
+   "en": "Red Bull Sugarfree",
+   "price": 18.0,
+   "img": "https://content.aigens.com/image/9Rpfg_mKNlo33FfPP3yqi4hTMAmr5pEQV_CrLQHwXfs=w512.png",
+   "img_w": 447,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100024760"
+  },
+  {
+   "series": "包裝飲品",
+   "series_en": "Pack Drinks",
+   "zh": "富士蘋果紅牛",
+   "en": "Red Bull Apple Edition (Fuji Apple)",
+   "price": 18.0,
+   "img": "https://content.aigens.com/image/yBzXox_VPD0oLaxKzKxSM80XRu2qczvRwzyXK7KvzF4=w512.png",
+   "img_w": 554,
+   "periods": [
+    "B",
+    "L",
+    "T",
+    "D"
+   ],
+   "item_id": "112882-0709-1100024761"
+  },
+  {
+   "series": "茶拿鐵系列",
+   "series_en": "Taste the Oriental Tea-Espresso Goodness",
+   "zh": "梔子奶茶",
+   "en": "Gardenia Milk Tea",
+   "price": 19.0,
+   "img": "https://content.aigens.com/image/AEj10sUp5mtbXSxOfz_w7ksI3AyQJa3XaysWeqkkgZc=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024736"
+  },
+  {
+   "series": "茶拿鐵系列",
+   "series_en": "Taste the Oriental Tea-Espresso Goodness",
+   "zh": "茉莉奶茶",
+   "en": "Jasmine Milk Tea",
+   "price": 19.0,
+   "img": "https://content.aigens.com/image/AEj10sUp5mtbXSxOfz_w7ksI3AyQJa3XaysWeqkkgZc=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024740"
+  },
+  {
+   "series": "茶拿鐵系列",
+   "series_en": "Taste the Oriental Tea-Espresso Goodness",
+   "zh": "梔子拿鐵",
+   "en": "Gardenia Tea Latte",
+   "price": 19.0,
+   "img": "https://content.aigens.com/image/q238MjP8vft7WsK2n1upnvk4bjs46U7I5glwtKb75EA=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024743"
+  },
+  {
+   "series": "茶拿鐵系列",
+   "series_en": "Taste the Oriental Tea-Espresso Goodness",
+   "zh": "龍井拿鐵",
+   "en": "Longjine Tea Latte",
+   "price": 19.0,
+   "img": "https://content.aigens.com/image/q238MjP8vft7WsK2n1upnvk4bjs46U7I5glwtKb75EA=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024738"
+  },
+  {
+   "series": "茶拿鐵系列",
+   "series_en": "Taste the Oriental Tea-Espresso Goodness",
+   "zh": "茉莉拿鐵",
+   "en": "Jasmine Tea Latte",
+   "price": 19.0,
+   "img": "https://content.aigens.com/image/q238MjP8vft7WsK2n1upnvk4bjs46U7I5glwtKb75EA=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024742"
+  },
+  {
+   "series": "茶拿鐵系列",
+   "series_en": "Taste the Oriental Tea-Espresso Goodness",
+   "zh": "抹茶茉莉",
+   "en": "Jasmine Matcha",
+   "price": 19.0,
+   "img": "https://content.aigens.com/image/ZxfFU52xzyL6w86S0qc3_ytZ_eumMOooIq_yCYDS324=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024737"
+  },
+  {
+   "series": "茶拿鐵系列",
+   "series_en": "Taste the Oriental Tea-Espresso Goodness",
+   "zh": "抹茶咖啡",
+   "en": "Dirty Matcha Latte",
+   "price": 19.0,
+   "img": "https://content.aigens.com/image/afYtW-Yg6oHrRt_lk8SGmdj1JIVWL0l3GjkMob8G-uA=w400.jpg",
+   "img_w": 400,
+   "periods": [
+    "S7"
+   ],
+   "item_id": "112882-0709-1100024739"
+  }
+ ]
+}

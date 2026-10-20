@@ -1,6 +1,6 @@
 # Eaty. — 城大搵食指南 · CityU Canteen Guide
 
-一個為香港城市大學（CityU HK）而寫的飯堂菜單與評價指南。收錄 **4 間食堂**（AC1 城大食坊、AC2 Canteen、AC3 Bistro、CMC Cafe）共 **380 道菜**，可以按 **餐段（早餐／午餐／晚餐）** 與菜品分類篩選，看每一道菜的價錢、照片與同學的真實評價，還有「今天吃什麼」隨機抽籤。
+一個為香港城市大學（CityU HK）而寫的飯堂菜單與評價指南。收錄 **4 間食堂**（AC1 城大食坊、AC2 Canteen、AC3 Bistro、CMC Cafe）共 **405 道菜**，可以按 **餐段（早餐／午餐／晚餐）** 與菜品分類篩選，看每一道菜的價錢、照片與同學的真實評價，還有「今天吃什麼」隨機抽籤。
 
 純靜態網站：**沒有建置步驟、沒有框架、沒有 `npm install`**——打開 `index.html` 就能跑。
 
@@ -12,7 +12,8 @@ A static, build-free menu & review guide for the CityU HK canteens. No framework
 
 | | |
 |---|---|
-| 🍜 **菜單瀏覽** | 380 道菜 / 73 個分類，可按食堂與菜品分類篩選；AC2 部分檔口可直接跳官方點餐 |
+| 🍜 **菜單瀏覽** | 405 道菜 / 73 個分類，可按食堂與菜品分類篩選；AC2 部分檔口可直接跳官方點餐 |
+| 🧋 **官方商品照** | AC2「四季茶坊」**49 道飲品全部採用點餐站的真實商品照**（600×600），價錢與官方菜單同步 |
 | 🛒 **點餐入口** | 食堂頁標題區就有入口：食堂有點餐站顯示「官方網上點餐」，只有檔口有（AC2）則列成「檔口點餐　西北麵館 ↗　餃餃陣 ↗」 |
 | 🕗 **餐段切換** | 食堂頁最上層是「全日／早餐／午餐／晚餐」，切換後分類與菜品一起收窄 |
 | ⭐ **真實評價** | 1–5 星 + 必食／普通／避雷三種評價，寫入 Supabase（全校共享） |
@@ -75,6 +76,7 @@ supabase/teahouse-2026-10-12.sql             ← AC2 四季茶坊 + 全站補圖
 supabase/ac3-snacks-photo-fix-2026-10-12.sql ← 修 AC3「小食」7 張相同佔位圖
 supabase/canteen-contact-2026-10-12.sql      ← 食堂簡介改「電話 + 付款方式」
 supabase/ac2-stalls-cmc-2026-10-14.sql       ← AC2 兩個檔口官方菜單 + 拾味 + 新食堂 CMC Cafe
+supabase/2026-10-15-ac2-teahouse-drinks.sql  ← AC2 四季茶坊飲品同步官方點餐站（24 → 49 道）
 ```
 
 跑完會建立 5 張表並灌入資料。下表是**跑完全部增量之後**的現況：
@@ -83,7 +85,7 @@ supabase/ac2-stalls-cmc-2026-10-14.sql       ← AC2 兩個檔口官方菜單 + 
 |---|---|
 | `canteens` | 4 間食堂（`order_url` 放大食堂的官方下單連結） |
 | `categories` | 73 個被用到的菜品分類（含 `meal` 餐段欄位、`order_url` 檔口下單連結） |
-| `dishes` | 380 道菜 |
+| `dishes` | 405 道菜 |
 | `reviews` | 使用者評論（初始為空） |
 | `roll_blacklist` | 「今天吃什麼」抽籤排除清單 |
 
@@ -106,6 +108,7 @@ SUPABASE_ANON_KEY: 'sb_publishable_...',
 |---|---|
 | `supabase/setup.sql` | 完整設定，**一般情況只需要這一個** |
 | `supabase/ac2-stalls-cmc-2026-10-14.sql` | AC2 餃餃陣／西北麵館同步官方點餐菜單 + 兩個檔口下單連結 + 新增「拾味 The Pick」+ 新食堂 CMC Cafe |
+| `supabase/2026-10-15-ac2-teahouse-drinks.sql` | AC2「四季茶坊」飲品同步官方點餐站：24 → **49 道**（補 23 道基本熱／凍飲 + 汽水 + 紅牛，換 47 張官方商品照，價錢校正） |
 | `supabase/ac3-snacks-photo-fix-2026-10-12.sql` | 修 AC3「小食」7 張相同佔位圖（原本 7 道菜共用同一張卡通圖 → 前端顯示空白卡） |
 | `supabase/canteen-contact-2026-10-12.sql` | 食堂簡介改為「電話 + 付款方式」（來源：CityU 官方餐飲目錄） |
 | `supabase/v0.6.0-meal-and-blacklist.sql` | v0.6.0 增量遷移（餐段欄位 + 抽籤黑名單）。內容已包含在 `setup.sql` 的 Part 4，舊專案才需要單獨跑 |
@@ -144,7 +147,7 @@ SUPABASE_ANON_KEY: 'sb_publishable_...',
 | `dish` | `dishes.id` | `ac1-pepperoni`、`ac2-claypot` |
 
 「今天吃什麼」的視窗裡會顯示**可抽 N 道菜**，那就是「範圍 × 時段」再扣掉排除清單之後的實際池子大小
-（2026-10-14 實測：全部 380 道 − 128 道飲品與非食品 = **252 道**；
+（2026-10-15 實測：全部 405 道 − 153 道飲品與非食品 = **252 道**；
 分食堂為 AC1 109／AC2 51／AC3 74／CMC 18。視窗可再按**時段**收窄，
 某時段在該範圍內一道菜都沒有時，那顆 chip 會變灰禁用 —— 例如 AC2 冇早餐）。
 把整張表刪光 = 不再排除任何東西。
@@ -165,6 +168,24 @@ v0.10.0 起，這些檔口的點餐連結也會一併出現在**食堂頁的標�
 食堂自己有點餐站（AC1／AC3）就顯示「官方網上點餐」，食堂沒有但檔口有（AC2）就逐個列成
 「檔口點餐　西北麵館 ↗　餃餃陣 ↗」，兩者都沒有（CMC）整行不顯示。判斷完全是資料驅動 ——
 只要在 `categories.order_url` 填上網址，標題區就會自動多一顆膠囊，不需要改程式。
+
+### 4. 從官方點餐站同步菜單（aigens 後端）
+
+CityU 的檔口點餐站（`csd.order.place`）背後是 **aigens**，菜單有一支公開 JSON API：
+
+```bash
+curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+  (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" \
+  "https://api.aigens.com/api/v1/menu/store/312882.json?menu=kiosk"
+```
+
+- ⚠️ **必須帶瀏覽器 UA**，否則回 404（不帶 UA 會被當成爬蟲擋掉）。
+- `312882` = 西北麵館／四季茶坊；`212882` = 餃餃陣；`112882` = AC2 食堂本體（兩個檔口共用它的分類）。
+- `menu=kiosk` 才是完整菜單；`menu=dinein` 只給時段菜單。
+- 菜品圖在 `images.default.url`（`content.aigens.com`，**600×600 正方形**，可直接 `object-fit:cover` 裁成 4:3）。
+- 分類名只有英文（`name`），中文要自己對應。
+
+實作範例見 `dev/2026-10-15-ac2-drinks-teahouse/build.py`（下載圖 + 生成 SQL 一次做完）。
 
 ---
 

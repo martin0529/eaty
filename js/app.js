@@ -216,8 +216,8 @@
 
   /** 預設標籤：給不想打字的人一組現成說法，點了會以 #標籤 形式加進食後感 */
   const TAG_CHIPS = [
-    'chipValue', 'chipPortionBig', 'chipTasty', 'chipFast',
-    'chipAverage', 'chipOily', 'chipSalty', 'chipSlow', 'chipSmall',
+    'chipValue', 'chipPortionBig', 'chipTasty', 'chipAverage', 'chipOily',
+    'chipSmall', 'chipNotTasty', 'chipTasteless', 'chipPricey',
   ];
 
   function quickRateBar(d) {

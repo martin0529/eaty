@@ -111,14 +111,14 @@
     /* 預設標籤：給不想打字的人一組現成說法 */
     formTags: { zh: '快速標籤（可選，可多選）', en: 'Quick tags (optional, pick any)' },
     chipValue: { zh: '抵食', en: 'Good value' },
-    chipPortionBig: { zh: '份量足', en: 'Generous portion' },
+    chipPortionBig: { zh: '份量多', en: 'Generous portion' },
     chipTasty: { zh: '好味', en: 'Tasty' },
-    chipFast: { zh: '上菜快', en: 'Served fast' },
     chipAverage: { zh: '中規中矩', en: 'Just OK' },
     chipOily: { zh: '太油', en: 'Too oily' },
-    chipSalty: { zh: '太鹹', en: 'Too salty' },
-    chipSlow: { zh: '等好久', en: 'Long wait' },
     chipSmall: { zh: '份量少', en: 'Small portion' },
+    chipNotTasty: { zh: '唔好味', en: 'Not tasty' },
+    chipTasteless: { zh: '冇味', en: 'Flavourless' },
+    chipPricey: { zh: '唔抵食', en: 'Poor value' },
     ratingOnly: { zh: '（只給了評分，沒有留言）', en: '(Rating only — no comment)' },
 
     /* 頁尾 */

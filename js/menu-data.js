@@ -150,7 +150,8 @@ window.CITYU_EATS_DATA = {
 (function () {
   'use strict';
   const CFG = window.CITYU_EATS_CONFIG;
-  const CACHE_KEY = 'cityu-eats:menu-cache:v3';   // v3：categories 多了 order_url（檔口下單連結）；v2 是多了 meal
+  // v4：四季茶坊的 order_url 已清空（它沒有獨立點餐平台）；v3 是 categories 多了 order_url
+  const CACHE_KEY = 'cityu-eats:menu-cache:v4';
 
   /* ── 餐段（meal）解析 ─────────────────────────
    * 雲端 categories.meal 是逗號分隔字串（例如 'lunch,dinner'），這裡統一轉成

@@ -80,7 +80,8 @@ supabase/ac3-snacks-photo-fix-2026-10-12.sql ← 修 AC3「小食」7 張相同�
 supabase/canteen-contact-2026-10-12.sql      ← 食堂簡介改「電話 + 付款方式」
 supabase/ac2-stalls-cmc-2026-10-14.sql       ← AC2 兩個檔口官方菜單 + 拾味 + 新食堂 CMC Cafe
 supabase/2026-10-15-ac2-teahouse-drinks.sql  ← AC2 四季茶坊飲品同步官方點餐站（24 → 49 道）
-supabase/2026-10-20-ac2-teahouse-resync.sql  ← AC2 四季茶坊重新同步（47 道在售、2 道下架、加點餐入口）
+supabase/2026-10-20-ac2-teahouse-resync.sql  ← AC2 四季茶坊重新同步（47 道在售、2 道下架）
+supabase/2026-10-20-clear-teahouse-order-url.sql ← 移除四季茶坊的點餐連結（它沒有獨立點餐平台）
 ```
 
 跑完會建立 5 張表並灌入資料。下表是**跑完全部增量之後**的現況：
@@ -113,7 +114,8 @@ SUPABASE_ANON_KEY: 'sb_publishable_...',
 | `supabase/setup.sql` | 完整設定，**一般情況只需要這一個** |
 | `supabase/ac2-stalls-cmc-2026-10-14.sql` | AC2 餃餃陣／西北麵館同步官方點餐菜單 + 兩個檔口下單連結 + 新增「拾味 The Pick」+ 新食堂 CMC Cafe |
 | `supabase/2026-10-15-ac2-teahouse-drinks.sql` | AC2「四季茶坊」飲品同步官方點餐站：24 → **49 道**（補 23 道基本熱／凍飲 + 汽水 + 紅牛，換 47 張官方商品照，價錢校正） |
-| `supabase/2026-10-20-ac2-teahouse-resync.sql` | AC2「四季茶坊」**重新同步**（v0.12.0）：47 道在售飲品逐項對齊官方名／英文名／價錢／商品照；官方已下架的「芝士荔枝梔香檸檬茶」「抹茶奶茶」改 `available = false`；舊種子重複的「凍檸檬茶 $9」（官方 $7.5）下架；四季茶坊分類補上官方點餐入口 |
+| `supabase/2026-10-20-ac2-teahouse-resync.sql` | AC2「四季茶坊」**重新同步**（v0.12.0）：47 道在售飲品逐項對齊官方名／英文名／價錢／商品照；官方已下架的「芝士荔枝梔香檸檬茶」「抹茶奶茶」改 `available = false`；舊種子重複的「凍檸檬茶 $9」（官方 $7.5）下架 |
+| `supabase/2026-10-20-clear-teahouse-order-url.sql` | 移除「四季茶坊」分類的 `order_url`（v0.13.2）。四季茶坊**沒有獨立點餐平台**，store 312882 是西北麵館的店 |
 | `supabase/ac3-snacks-photo-fix-2026-10-12.sql` | 修 AC3「小食」7 張相同佔位圖（原本 7 道菜共用同一張卡通圖 → 前端顯示空白卡） |
 | `supabase/canteen-contact-2026-10-12.sql` | 食堂簡介改為「電話 + 付款方式」（來源：CityU 官方餐飲目錄） |
 | `supabase/v0.6.0-meal-and-blacklist.sql` | v0.6.0 增量遷移（餐段欄位 + 抽籤黑名單）。內容已包含在 `setup.sql` 的 Part 4，舊專案才需要單獨跑 |
@@ -168,6 +170,8 @@ update categories set order_url = 'https://csd.order.place/home/store/212882' wh
 
 填了就會在該分類的標題列（以及單獨選中該分類時）出現「網上點餐」按鈕；留空則不顯示。
 目前 AC2 只有 **餃餃陣**（store `212882`）與 **西北麵館**（store `312882`）兩個檔口有官方點餐店。
+**「四季茶坊」沒有獨立點餐平台**（它的飲品只是掛在西北麵館的店 `312882` 菜單下），
+所以分類的 `order_url` 必須留空 —— 填了會把客人帶去西北麵館的店。
 
 v0.10.0 起，這些檔口的點餐連結也會一併出現在**食堂頁的標題區**（時段行與評分列之間）：
 食堂自己有點餐站（AC1／AC3）就顯示「官方網上點餐」，食堂沒有但檔口有（AC2）就逐個列成
@@ -185,7 +189,7 @@ curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
 ```
 
 - ⚠️ **必須帶瀏覽器 UA**，否則回 404（不帶 UA 會被當成爬蟲擋掉）。
-- `312882` = 西北麵館／四季茶坊；`212882` = 餃餃陣；`112882` = AC2 食堂本體（兩個檔口共用它的分類）。
+- `312882` = **西北麵館**（四季茶坊的飲品也掛在這間店的菜單下，但四季茶坊本身沒有獨立點餐店）；`212882` = 餃餃陣；`112882` = AC2 食堂本體（兩個檔口共用它的分類）。
 - `menu=kiosk` 才是完整菜單；`menu=dinein` 只給時段菜單。
 - 菜品圖在 `images.default.url`（`content.aigens.com`，**600×600 正方形**，可直接 `object-fit:cover` 裁成 4:3）。
 - 分類名只有英文（`name`），中文要自己對應。

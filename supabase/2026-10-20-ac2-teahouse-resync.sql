@@ -62,5 +62,6 @@ update dishes set available = false where id = 'ac2-th-matcha-milk-tea';
 -- ④ AC2 其他飲品一律歸四季茶坊：舊種子「飲品甜品」裡的凍檸檬茶（$9，與官方 $7.5 重複）下架
 update dishes set available = false where id = 'ac2-milk-tea';
 
--- ⑤ 四季茶坊分類補上官方點餐入口（飲品都在 store 312882）
-update categories set order_url = 'https://csd.order.place/order/store/312882/mode/dinein' where id = '四季茶坊';
+-- ⑤ 四季茶坊**沒有**獨立點餐平台（store 312882 是西北麵館的店，飲品只是掛在該店菜單下），
+--    所以分類不給點餐連結 —— 給了會把客人帶去西北麵館的店。就算重跑本檔也要保持 NULL。
+update categories set order_url = null where id = '四季茶坊';

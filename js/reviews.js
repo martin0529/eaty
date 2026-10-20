@@ -36,7 +36,8 @@
       r && DATA.dishes.some((d) => d.id === r.dishId) &&
       Number.isInteger(r.rating) && r.rating >= 1 && r.rating <= 5 &&
       ['must', 'ok', 'avoid'].includes(r.verdict) &&
-      typeof r.text === 'string' && r.text.trim().length > 0
+      // text 允許空字串：一鍵評分只投星級與判定，不強迫打字
+      typeof r.text === 'string' && r.text.trim().length <= 600
     );
   }
 

@@ -211,6 +211,33 @@
     return `<span class="stamp stamp-${verdict}">${esc(I18N.t(key))}</span>`;
   }
 
+  /* 一鍵評分：判定直接對應星級，按下即送出，完全不用打字 */
+  const QUICK_RATINGS = { must: 5, ok: 3, avoid: 1 };
+
+  /** 預設標籤：給不想打字的人一組現成說法，點了會以 #標籤 形式加進食後感 */
+  const TAG_CHIPS = [
+    'chipValue', 'chipPortionBig', 'chipTasty', 'chipFast',
+    'chipAverage', 'chipOily', 'chipSalty', 'chipSlow', 'chipSmall',
+  ];
+
+  function quickRateBar(d) {
+    const btn = (verdict, key) => `
+      <button type="button" class="quick-btn quick-btn-${verdict}" data-quick="${verdict}">
+        <b>${esc(I18N.t(key))}</b>
+        <span>${esc(I18N.t('quickStars').replace('{n}', QUICK_RATINGS[verdict]))}</span>
+      </button>`;
+    return `
+      <div class="quick-rate" data-dish="${d.id}">
+        <div class="quick-rate-label">
+          <b>${esc(I18N.t('quickTitle'))}</b>
+          <span>${esc(I18N.t('quickNote'))}</span>
+        </div>
+        <div class="quick-btns">
+          ${btn('must', 'verdictMust')}${btn('ok', 'verdictOk')}${btn('avoid', 'verdictAvoid')}
+        </div>
+      </div>`;
+  }
+
   /* 暱稱 → avatar 底色（穩定雜湊） */
   const AV_COLORS = ['#C63325', '#2E7D42', '#8A6BB8', '#B67E0F', '#33689B', '#7A4A98', '#4A6B2F', '#A0522D'];
   function avColor(nick) {
@@ -441,7 +468,11 @@
                     <span class="avoid-dish-name">${esc(I18N.pick(d))}<span class="avoid-dish-en">${esc(d.en)}</span></span>
                     <span class="avoid-dish-meta">${esc(c ? c.short : '')} · ${fmtPrice(d.price)}</span>
                   </button>
-                  <span class="avoid-votes"><b>${avoidPct}%</b><i>${esc(I18N.t('avoidPctOf'))}</i></span>
+                  <span class="avoid-votes">
+                    <b>${avoidPct}%</b>
+                    <i>${esc(I18N.t('avoidPctOf'))}</i>
+                    <em class="avoid-count">${esc(reviewCountText(s.count))}</em>
+                  </span>
                 </li>`;
               }).join('')}
             </ol>
@@ -701,7 +732,7 @@ ${mealBar}
           <span class="review-date">${fmtDate(r.created)}</span>
         </div>
         <div class="review-stars">${starsSvg(r.rating)}${verdictTag(r.verdict)}</div>
-        <p class="review-text">${esc(r.text)}</p>
+        <p class="review-text${r.text ? '' : ' review-text--empty'}">${r.text ? esc(r.text) : esc(I18N.t('ratingOnly'))}</p>
       </li>`).join('')
       : `<li class="review-item review-empty">${esc(I18N.t('noReviewsYet'))}</li>`;
 
@@ -743,6 +774,8 @@ ${mealBar}
           </div>
         </div>
 
+        ${quickRateBar(d)}
+
         <div class="dish-modal-reviews">
           <h3 class="block-head">${esc(I18N.t('latestHeading'))}</h3>
           <ul class="review-list">${reviewList}</ul>
@@ -766,6 +799,12 @@ ${mealBar}
               <button type="button" class="verdict-opt verdict-opt-avoid" role="radio" aria-checked="false" data-value="avoid">${esc(I18N.t('verdictAvoid'))}</button>
             </div>
           </fieldset>
+          <fieldset class="tag-field">
+            <legend>${esc(I18N.t('formTags'))}</legend>
+            <div class="tag-picks" role="group" aria-label="${esc(I18N.t('formTags'))}">
+              ${TAG_CHIPS.map((k) => `<button type="button" class="tag-pick" data-tag="${esc(I18N.t(k))}" aria-pressed="false">#${esc(I18N.t(k))}</button>`).join('')}
+            </div>
+          </fieldset>
           <div class="form-row">
             <label class="nick-field">
               <span>${esc(I18N.t('formNickname'))}</span>
@@ -775,7 +814,7 @@ ${mealBar}
           </div>
           <label class="text-field">
             <span>${esc(I18N.t('formText'))}</span>
-            <textarea name="text" rows="3" maxlength="600" placeholder="${esc(I18N.t('formTextPlaceholder'))}" required></textarea>
+            <textarea name="text" rows="3" maxlength="600" placeholder="${esc(I18N.t('formTextPlaceholder'))}"></textarea>
           </label>
           <p class="form-error" hidden></p>
           <div class="form-foot">
@@ -1331,6 +1370,50 @@ ${mealBar}
     });
   }
 
+  /**
+   * 送出評論 → 重載 → 重開 modal。一鍵評分與完整表單共用這一條路徑。
+   * quick = true 時，感謝條放在快速評分區下方（使用者沒滑到表單也看得到）。
+   */
+  async function publishReview(dishId, payload, opts) {
+    const o = opts || {};
+    const btn = o.btn || null;
+    const errEl = o.errEl || null;
+    const isSubmit = !!btn && btn.type === 'submit';
+    const orig = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('is-busy');
+      if (isSubmit) btn.textContent = I18N.t('formSubmitting');
+    }
+    try {
+      await store.add(Object.assign({ dishId }, payload));
+      await loadReviews();
+      const canteenId = dishById(dishId).canteenId;
+      if (state.route.view === 'canteen') renderCanteen(canteenId);
+      else renderHome();
+      openDish(dishId);
+      const banner = document.createElement('p');
+      banner.className = 'form-thanks is-new';
+      banner.textContent = I18N.t(o.quick ? 'quickDone' : 'formThanks');
+      const anchor = modalRoot.querySelector(o.quick ? '.quick-rate' : '.review-form');
+      if (anchor) {
+        if (o.quick) anchor.insertAdjacentElement('afterend', banner);
+        else anchor.prepend(banner);
+      }
+    } catch (err) {
+      if (errEl) {
+        errEl.textContent = I18N.t('errNetwork');
+        errEl.hidden = false;
+        retrigger(errEl, 'is-shake');
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('is-busy');
+        if (isSubmit) btn.textContent = orig;
+      }
+    }
+  }
+
   document.addEventListener('click', async (e) => {
     const actionEl = e.target.closest('[data-action]');
     if (!actionEl) return;
@@ -1405,6 +1488,46 @@ ${mealBar}
   });
 
   document.addEventListener('click', (e) => {
+    // 一鍵評分：按下即送出（判定 → 星級 → 空食後感）
+    const quickBtn = e.target.closest('.quick-btn');
+    if (quickBtn) {
+      const bar = quickBtn.closest('.quick-rate');
+      const dishId = bar ? bar.getAttribute('data-dish') : '';
+      const verdict = quickBtn.getAttribute('data-quick');
+      const nickInput = modalRoot.querySelector('.review-form input[name="nickname"]');
+      popOnce(quickBtn, 400);
+      publishReview(dishId, {
+        rating: QUICK_RATINGS[verdict] || 3,
+        verdict,
+        text: '',
+        nickname: nickInput ? nickInput.value : '',
+      }, { btn: quickBtn, quick: true });
+      return;
+    }
+
+    // 預設標籤：以「#標籤」形式插進食後感，再點一次就移除
+    const tagPick = e.target.closest('.tag-pick');
+    if (tagPick) {
+      const form = tagPick.closest('form');
+      const ta = form && form.querySelector('textarea[name="text"]');
+      if (ta) {
+        const token = '#' + tagPick.getAttribute('data-tag');
+        const on = tagPick.classList.toggle('on');
+        if (on) {
+          ta.value = ta.value.trim() ? ta.value.replace(/\s+$/, '') + ' ' + token : token;
+        } else {
+          const safe = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          ta.value = ta.value
+            .replace(new RegExp('\\s*' + safe + '\\s*'), ' ')
+            .replace(/^\s+/, '')
+            .replace(/\s+$/, '');
+        }
+        tagPick.setAttribute('aria-pressed', on ? 'true' : 'false');
+        popOnce(tagPick, 320);
+      }
+      return;
+    }
+
     const starBtn = e.target.closest('.star-btn');
     if (starBtn) {
       const form = starBtn.closest('form');
@@ -1444,39 +1567,16 @@ ${mealBar}
       errEl.hidden = false;
       retrigger(errEl, 'is-shake');
     };
+    // 只要求星級：食後感可以留空（甚至只點幾個標籤也算），門檻壓到最低
     if (!rating) return fail('errNeedRating');
-    if (!text || text.trim().length < 2) return fail('errNeedText');
     errEl.hidden = true;
 
-    const btn = form.querySelector('button[type="submit"]');
-    const orig = btn.textContent;
-    btn.disabled = true;
-    btn.classList.add('is-busy');            // 送出中：按鈕內顯示轉圈
-    btn.textContent = I18N.t('formSubmitting');
-    try {
-      await store.add({
-        dishId, rating, verdict: verdictBtn ? verdictBtn.getAttribute('data-value') : 'ok',
-        nickname, text,
-      });
-      await loadReviews();
-      // 重開 modal 顯示新評論
-      const canteenId = dishById(dishId).canteenId;
-      if (state.route.view === 'canteen') renderCanteen(canteenId);
-      else renderHome();
-      openDish(dishId);
-      const banner = document.createElement('p');
-      banner.className = 'form-thanks is-new';
-      banner.textContent = I18N.t('formThanks');
-      const reopenedForm = modalRoot.querySelector('.review-form');
-      if (reopenedForm) reopenedForm.prepend(banner);
-    } catch (err) {
-      errEl.textContent = I18N.t('errNetwork');
-      errEl.hidden = false;
-      retrigger(errEl, 'is-shake');
-      btn.disabled = false;
-      btn.classList.remove('is-busy');
-      btn.textContent = orig;
-    }
+    await publishReview(dishId, {
+      rating,
+      verdict: verdictBtn ? verdictBtn.getAttribute('data-value') : 'ok',
+      nickname,
+      text,
+    }, { errEl, btn: form.querySelector('button[type="submit"]') });
   });
 
   document.addEventListener('keydown', (e) => {

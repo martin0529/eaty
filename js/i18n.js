@@ -89,10 +89,10 @@
     formVerdict: { zh: '你的判定', en: 'Your verdict' },
     formNickname: { zh: '暱稱（可留空＝匿名同學）', en: 'Nickname (leave blank to stay anonymous)' },
     formNicknamePlaceholder: { zh: '匿名同學', en: 'Anonymous student' },
-    formText: { zh: '食後感', en: 'Your review' },
+    formText: { zh: '食後感（可留空）', en: 'Your review (optional)' },
     formTextPlaceholder: {
-      zh: '份量、味道、等待時間、是否划算……',
-      en: 'Portion, taste, wait time, value for money…',
+      zh: '份量、味道、等待時間、是否划算……留空也可以，只給星級一樣算數。',
+      en: 'Portion, taste, wait time, value… or leave it blank — a rating alone still counts.',
     },
     formSubmit: { zh: '刊登評論', en: 'Post review' },
     formSubmitting: { zh: '刊登中…', en: 'Posting…' },
@@ -101,6 +101,25 @@
     errNeedText: { zh: '請至少寫幾個字再發佈。', en: 'Write at least a few words before posting.' },
     errNetwork: { zh: '評論傳送失敗，請再試一次。', en: 'Could not post the review, please try again.' },
     formThanks: { zh: '已刊登！謝謝你的分享。', en: 'Posted — thanks for feeding the campus.' },
+
+    /* 一鍵評分：不用打字也能投一票 */
+    quickTitle: { zh: '一鍵評分', en: 'One-tap rating' },
+    quickNote: { zh: '不用寫字，按一下就算一票。', en: 'No typing needed — one tap counts as a vote.' },
+    quickStars: { zh: '{n} 星', en: '{n}★' },
+    quickDone: { zh: '已記下你的一票！', en: 'Your vote is in!' },
+
+    /* 預設標籤：給不想打字的人一組現成說法 */
+    formTags: { zh: '快速標籤（可選，可多選）', en: 'Quick tags (optional, pick any)' },
+    chipValue: { zh: '抵食', en: 'Good value' },
+    chipPortionBig: { zh: '份量足', en: 'Generous portion' },
+    chipTasty: { zh: '好味', en: 'Tasty' },
+    chipFast: { zh: '上菜快', en: 'Served fast' },
+    chipAverage: { zh: '中規中矩', en: 'Just OK' },
+    chipOily: { zh: '太油', en: 'Too oily' },
+    chipSalty: { zh: '太鹹', en: 'Too salty' },
+    chipSlow: { zh: '等好久', en: 'Long wait' },
+    chipSmall: { zh: '份量少', en: 'Small portion' },
+    ratingOnly: { zh: '（只給了評分，沒有留言）', en: '(Rating only — no comment)' },
 
     /* 頁尾 */
     footerTagline: {

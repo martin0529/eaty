@@ -150,8 +150,9 @@ window.CITYU_EATS_DATA = {
 (function () {
   'use strict';
   const CFG = window.CITYU_EATS_CONFIG;
+  // v5：新增第 5 間食堂 5380 Cafe（55 道）
   // v4：四季茶坊的 order_url 已清空（它沒有獨立點餐平台）；v3 是 categories 多了 order_url
-  const CACHE_KEY = 'cityu-eats:menu-cache:v4';
+  const CACHE_KEY = 'cityu-eats:menu-cache:v5';
 
   /* ── 餐段（meal）解析 ─────────────────────────
    * 雲端 categories.meal 是逗號分隔字串（例如 'lunch,dinner'），這裡統一轉成

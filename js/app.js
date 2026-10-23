@@ -58,9 +58,12 @@
       ? `${d.getMonth() + 1}月${d.getDate()}日`
       : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   }
-  /* AC2／AC3 的中英名稱相同（「AC2 Canteen」），主副名並排會變成連續兩次一樣的字。
-     副名跟主名相同時改用 short（AC2／AC3）；名稱本身已含短碼時就不再加前綴。 */
+  /* 食堂卡名旁邊的小字（副名）。
+     ① canteens.alias 有值 → 直接用（v0.14.1；例如 5380 Cafe → 「AC1」、CMCAFE → 「CMC」，
+        因為這兩個原本會變成「5380 Cafe　5380」「CMCAFE　CMC CAFE」自己重複自己）；
+     ② 否則顯示另一個語言的名稱；③ 兩者相同時改用 short（AC2／AC3）。 */
   function canteenAltName(c) {
+    if (c.alias) return c.alias;
     const zh = I18N.lang() === 'zh';
     const main = String(zh ? c.zh : c.en || '').trim();
     const alt = String(zh ? c.en || '' : c.zh).trim();

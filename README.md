@@ -84,13 +84,14 @@ supabase/2026-10-15-ac2-teahouse-drinks.sql  ← AC2 四季茶坊飲品同步官
 supabase/2026-10-20-ac2-teahouse-resync.sql  ← AC2 四季茶坊重新同步（47 道在售、2 道下架）
 supabase/2026-10-20-clear-teahouse-order-url.sql ← 移除四季茶坊的點餐連結（它沒有獨立點餐平台）
 supabase/2026-10-23-5380-cafe.sql            ← 新食堂 5380 Cafe（8 分類／55 道）
+supabase/2026-10-23-canteen-alias.sql        ← `canteens.alias`（食堂卡小字：5380 → AC1、CMC → CMC）
 ```
 
 跑完會建立 5 張表並灌入資料。下表是**跑完全部增量之後**的現況：
 
 | 表 | 內容 |
 |---|---|
-| `canteens` | 5 間食堂（`order_url` 放大食堂的官方下單連結） |
+| `canteens` | 5 間食堂（`order_url` 放大食堂的官方下單連結；`alias` 是食堂卡名旁邊那行小字，可空） |
 | `categories` | 81 個被用到的菜品分類（含 `meal` 餐段欄位、`order_url` 檔口下單連結） |
 | `dishes` | 452 道上架菜（DB 內另有 34 道下架留存） |
 | `reviews` | 使用者評論（初始為空） |
@@ -119,6 +120,7 @@ SUPABASE_ANON_KEY: 'sb_publishable_...',
 | `supabase/2026-10-20-ac2-teahouse-resync.sql` | AC2「四季茶坊」**重新同步**（v0.12.0）：47 道在售飲品逐項對齊官方名／英文名／價錢／商品照；官方已下架的「芝士荔枝梔香檸檬茶」「抹茶奶茶」改 `available = false`；舊種子重複的「凍檸檬茶 $9」（官方 $7.5）下架 |
 | `supabase/2026-10-20-clear-teahouse-order-url.sql` | 移除「四季茶坊」分類的 `order_url`（v0.13.2）。四季茶坊**沒有獨立點餐平台**，store 312882 是西北麵館的店 |
 | `supabase/2026-10-23-5380-cafe.sql` | 新食堂「5380 Cafe」（v0.14.0）：康樂樓 5 樓 R5013，Ebeneezer's 中東菜，8 個分類／55 道（49 道上架，6 道菜牌貼了 SOLD OUT）。飲品分類同步加入抽籤黑名單 |
+| `supabase/2026-10-23-canteen-alias.sql` | `canteens.alias` 新欄位（v0.14.1）：食堂卡名旁邊那行小字可自訂。5380 Cafe → **AC1**（它在康樂樓）、CMCAFE → **CMC**；留空則沿用原本「顯示另一語言名稱」的規則 |
 | `supabase/ac3-snacks-photo-fix-2026-10-12.sql` | 修 AC3「小食」7 張相同佔位圖（原本 7 道菜共用同一張卡通圖 → 前端顯示空白卡） |
 | `supabase/canteen-contact-2026-10-12.sql` | 食堂簡介改為「電話 + 付款方式」（來源：CityU 官方餐飲目錄） |
 | `supabase/v0.6.0-meal-and-blacklist.sql` | v0.6.0 增量遷移（餐段欄位 + 抽籤黑名單）。內容已包含在 `setup.sql` 的 Part 4，舊專案才需要單獨跑 |

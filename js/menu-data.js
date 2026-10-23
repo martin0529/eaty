@@ -150,9 +150,10 @@ window.CITYU_EATS_DATA = {
 (function () {
   'use strict';
   const CFG = window.CITYU_EATS_CONFIG;
+  // v6：canteens 多了 alias（食堂卡小字可自訂：5380 → AC1、CMC → CMC）
   // v5：新增第 5 間食堂 5380 Cafe（55 道）
   // v4：四季茶坊的 order_url 已清空（它沒有獨立點餐平台）；v3 是 categories 多了 order_url
-  const CACHE_KEY = 'cityu-eats:menu-cache:v5';
+  const CACHE_KEY = 'cityu-eats:menu-cache:v6';
 
   /* ── 餐段（meal）解析 ─────────────────────────
    * 雲端 categories.meal 是逗號分隔字串（例如 'lunch,dinner'），這裡統一轉成
@@ -232,6 +233,8 @@ window.CITYU_EATS_DATA = {
     return {
       id: r.id, short: (r.id || '').toUpperCase(),
       zh: r.zh || r.en || r.id, en: r.en || r.zh || r.id,
+      // alias ＝ 食堂卡名旁邊那行小字（可空）。空 → 前端自己決定（見 app.js canteenAltName）
+      alias: (r.alias || '').trim(),
       bldgZh: r.bldg_zh || '', bldgEn: r.bldg_en || '',
       hoursZh: r.hours_zh || '', hoursEn: r.hours_en || '',
       factZh: r.fact_zh || '', factEn: r.fact_en || '',

@@ -475,6 +475,64 @@
       </div>`;
   }
 
+  /* ── 評論翻譯 ───────────────────────────── */
+
+  /** 翻譯鈕＋譯文容器。只在「留言語言 ≠ 介面語言」時插入，所以不會滿畫面都是按鈕。 */
+  function trToggleHtml() {
+    return `
+      <div class="tr-box" data-tr-box hidden></div>
+      <button type="button" class="tr-btn" data-action="translate-review" aria-expanded="false" aria-label="${esc(I18N.t('trAria'))}">${esc(I18N.t('trToggle'))}</button>`;
+  }
+
+  /** 點「翻譯」：原文保留、譯文插在下面；再點一次收起。同一段文字命中快取就不再發請求。 */
+  async function translateReview(btn) {
+    const W = window.EatyTranslate;
+    const host = btn.closest('[data-tr-host]');
+    const box = host && host.querySelector('[data-tr-box]');
+    const srcEl = host && host.querySelector('.review-text, .quote-text');
+    if (!W || !box || !srcEl) return;
+
+    if (btn.dataset.state === 'on') {
+      box.hidden = true;
+      btn.dataset.state = 'off';
+      btn.textContent = I18N.t('trToggle');
+      btn.setAttribute('aria-expanded', 'false');
+      return;
+    }
+
+    const src = srcEl.textContent.trim();
+    if (!src) return;
+    const to = I18N.lang();
+
+    const fill = (out) => {
+      box.innerHTML = `<p class="tr-text">${esc(out)}</p><span class="tr-note">${esc(I18N.t('trNote'))}</span>`;
+      box.hidden = false;
+      btn.dataset.state = 'on';
+      btn.textContent = I18N.t('trHide');
+      btn.setAttribute('aria-expanded', 'true');
+    };
+
+    const hit = W.cached(src, to);
+    if (hit) { fill(hit); return; }
+
+    btn.disabled = true;
+    btn.dataset.state = 'loading';
+    btn.textContent = I18N.t('trLoading');
+    btn.setAttribute('aria-busy', 'true');
+    try {
+      fill(await W.translate(src, to));
+    } catch (e) {
+      // 兩條通道都不通時只說失敗，不假造內容
+      box.innerHTML = `<span class="tr-err">${esc(I18N.t('trError'))}</span>`;
+      box.hidden = false;
+      btn.dataset.state = 'off';
+      btn.textContent = I18N.t('trToggle');
+    } finally {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+    }
+  }
+
   function latestReviewCards() {
     const list = [...state.reviews]
       .sort((a, b) => new Date(b.created) - new Date(a.created))
@@ -487,8 +545,11 @@
           const d = dishById(r.dishId);
           if (!d) return '';
           const c = canteenById(d.canteenId);
+          const canTr = !!(r.text && window.EatyTranslate && EatyTranslate.need(r.text, I18N.lang()));
+          // 用 div + role="button"，因為卡片裡還要放一顆翻譯鈕，而 <button> 不能嵌套；
+          // 鍵盤的 Enter / Space 由下方的 keydown 監聽補上。
           return `
-            <button class="quote-card reveal" data-action="open-dish" data-id="${d.id}">
+            <div class="quote-card reveal" role="button" tabindex="0" data-action="open-dish" data-id="${d.id}"${canTr ? ' data-tr-host' : ''}>
               <span class="quote-who">
                 ${avatar(r.nickname)}
                 <span class="quote-nick">${esc(r.nickname)}${r.sample ? ` <span class="sample-flag">${esc(I18N.t('sampleTag'))}</span>` : ''}
@@ -496,8 +557,9 @@
               </span>
               <span class="quote-stars">${starsSvg(r.rating)}${verdictTag(r.verdict)}</span>
               <p class="quote-text">${esc(r.text)}</p>
+              ${canTr ? trToggleHtml() : ''}
               <span class="quote-dish">${esc(I18N.pick(d))} · ${esc(c ? c.short : '')}</span>
-            </button>`;
+            </div>`;
         }).join('')}
       </div>`;
   }
@@ -975,8 +1037,11 @@ ${mealBar}
         <div class="v-pill avoid"><b>${Math.round(s.avoidRatio * 100)}%</b><span>${esc(I18N.t('verdictAvoid'))}</span></div>
       </div>` : '';
 
-    const reviewList = rs.length ? rs.map((r) => `
-      <li class="review-item">
+    const reviewList = rs.length ? rs.map((r) => {
+      // 只在「留言語言 ≠ 介面語言」時給翻譯鈕：中文介面翻英文留言、英文介面翻中文留言
+      const canTr = !!(r.text && window.EatyTranslate && EatyTranslate.need(r.text, I18N.lang()));
+      return `
+      <li class="review-item"${canTr ? ' data-tr-host' : ''}>
         <div class="review-head">
           ${avatar(r.nickname)}
           <span class="review-nick">${esc(r.nickname)}${r.sample ? `<i class="sample-flag">${esc(I18N.t('sampleTag'))}</i>` : ''}</span>
@@ -984,7 +1049,9 @@ ${mealBar}
         </div>
         <div class="review-stars">${starsSvg(r.rating)}${verdictTag(r.verdict)}</div>
         <p class="review-text${r.text ? '' : ' review-text--empty'}">${r.text ? esc(r.text) : esc(I18N.t('ratingOnly'))}</p>
-      </li>`).join('')
+        ${canTr ? trToggleHtml() : ''}
+      </li>`;
+    }).join('')
       : `<li class="review-item review-empty">${esc(I18N.t('noReviewsYet'))}</li>`;
 
     // 可捲動的內容包進 .modal-scroll，關閉鈕放在它「外面」——
@@ -1762,6 +1829,16 @@ ${mealBar}
     }
   }
 
+  // .quote-card 由 <button> 改成 div[role=button]（卡片裡要放翻譯鈕），
+  // 所以 Enter / Space 要自己補，否則鍵盤使用者打不開菜品。
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target.closest && e.target.closest('.quote-card[role="button"]');
+    if (!el || e.target !== el) return;   // 焦點在卡片裡的翻譯鈕時，走原生按鈕行為
+    e.preventDefault();
+    el.click();
+  });
+
   document.addEventListener('click', async (e) => {
     const actionEl = e.target.closest('[data-action]');
     if (!actionEl) return;
@@ -1780,6 +1857,8 @@ ${mealBar}
         moveUniThumb(!reduceMotion());
       }
       switchUniversity(actionEl.getAttribute('data-id'));
+    } else if (action === 'translate-review') {
+      translateReview(actionEl);
     } else if (action === 'open-dish') {
       e.preventDefault();
       openDish(actionEl.getAttribute('data-id'));

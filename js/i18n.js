@@ -159,6 +159,14 @@
     chipPricey: { zh: '唔抵食', en: 'Poor value' },
     ratingOnly: { zh: '（只給了評分，沒有留言）', en: '(Rating only — no comment)' },
 
+    /* 評論翻譯（只在留言語言 ≠ 介面語言時出現） */
+    trToggle: { zh: '翻譯', en: 'Translate' },
+    trHide: { zh: '收起譯文', en: 'Hide translation' },
+    trLoading: { zh: '翻譯中…', en: 'Translating…' },
+    trNote: { zh: '機器翻譯', en: 'Machine translation' },
+    trError: { zh: '翻譯失敗，請再試一次', en: 'Translation failed — please try again' },
+    trAria: { zh: '把這則評論翻譯成中文', en: 'Translate this review into English' },
+
     /* 頁尾 */
     footerTagline: {
       zh: '香港校園覓食，由 Eaty 開始。兩間大學的食堂、價錢與避雷情報。',

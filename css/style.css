@@ -592,8 +592,12 @@ html[data-uni] .masthead-dot{opacity:1;transform:scale(1)}
 .quote-card{
   text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:var(--r-card);padding:24px;
   display:flex;flex-direction:column;gap:12px;
+  /* v2.2.0 起由 <button> 改成 div[role=button]（卡片內要放翻譯鈕），
+     button 的預設字體與游標不會继承，要自己補 */
+  font:inherit;color:inherit;cursor:pointer;
   transition:transform var(--dur-3) var(--ease),box-shadow var(--dur-3) var(--ease),border-color var(--dur-2) var(--ease);
 }
+.quote-card:focus-visible{outline:2px solid var(--red);outline-offset:3px}
 .quote-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-card);border-color:#DCD9D1;will-change:transform}
 .quote-card:active{transform:translateY(-2px) scale(.988);transition-duration:var(--dur-1)}
 .quote-who{display:flex;align-items:center;gap:12px}
@@ -603,6 +607,9 @@ html[data-uni] .masthead-dot{opacity:1;transform:scale(1)}
 .quote-stars{display:flex;align-items:center;gap:10px}
 .quote-text{font-size:14px;color:var(--ink-soft);line-height:1.75}
 .quote-dish{font:700 12.5px/1.5 var(--sans);color:var(--red-deep)}
+/* 譯文展開後卡片會變高，同一排其他卡被 grid 拉成等高 —— 把菜名推到底部，
+   留白就變成「行距」而不是「下方破洞」 */
+.quote-card .quote-dish{margin-top:auto}
 .quote-dish:hover{text-decoration:underline}
 
 /* ── 頁尾 ── */
@@ -868,6 +875,30 @@ html[data-uni] .masthead-dot{opacity:1;transform:scale(1)}
 .review-text{font-size:13.5px;color:var(--ink-soft);line-height:1.7}
 /* 只給了星級、沒留言的評論：用斜體灰字說明，而不是留一條空白 */
 .review-text--empty{color:var(--meta);font-style:italic}
+
+/* ── 評論翻譯 ──
+   原文一定保留，譯文插在它下面；用左側細線區隔，並在右下角標「機器翻譯」，
+   不要讓人誤以為譯文是使用者自己寫的。 */
+.tr-btn{
+  align-self:flex-start;display:inline-flex;align-items:center;
+  font:700 11.5px/1 var(--sans);color:var(--red-deep);
+  background:none;border:1.5px solid rgba(198,51,37,.22);border-radius:999px;
+  padding:6px 12px;cursor:pointer;
+  transition:background var(--dur-2) var(--ease),border-color var(--dur-2) var(--ease),opacity var(--dur-2) var(--ease);
+}
+.tr-btn:hover{background:rgba(198,51,37,.07);border-color:rgba(198,51,37,.4)}
+.tr-btn:active{opacity:.6}
+.tr-btn[disabled]{cursor:default;opacity:.55}
+.tr-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.tr-box{
+  border-left:2.5px solid rgba(198,51,37,.26);
+  padding:1px 0 1px 12px;margin-top:1px;
+  animation:contentIn 300ms var(--ease-out) both;
+}
+.tr-box[hidden]{display:none}
+.tr-text{font-size:13.5px;color:var(--ink);line-height:1.7}
+.tr-note{display:inline-block;margin-top:5px;font:600 10.5px/1 var(--sans);letter-spacing:.04em;color:var(--meta)}
+.tr-err{font-size:12.5px;color:var(--red-deep)}
 
 /* 一鍵評分：不用打字就能投一票，放在評分摘要與評論列表之間 */
 .quick-rate{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:15px 40px;margin:18px 0 6px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(198,51,37,.04),rgba(198,51,37,0))}

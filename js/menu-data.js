@@ -1,169 +1,27 @@
-/* Eaty — 城大搵食指南 菜單資料（想更新菜單就改這個檔案）
+/* Eaty — 多大學版本 · 菜單載入器（雲端優先，本地後備）
  *
- * 資料來源：
- *  - AC1 城大食坊：2026-10-02 從官方點餐站 csd.order.place/home/store/112870 抄錄的真實菜品與價錢。
- *    （價錢會浮動，以飯堂現場為準；品項可能隨時間改變。）
- *  - AC2 / AC3：官方沒有網上菜單，以下是代表性菜品（真實名氣菜＋常見檔口款式），
- *    價錢為約數，請按實際情況修改。
+ * v2.0.0 起與單校版合併：菜單、分類、食堂、大學清單都放在 Supabase，
+ * 本地 js/data/*.js 只在「連不上資料庫」時頂上。載入器做三件事：
+ *   1. 啟動時抓雲端（universities / canteens / categories / dishes），
+ *      成功就把 EATY_DATA.raw 換成雲端版本；任何一步失敗就整批保留本地。
+ *   2. 依「目前選的大學」把 EATY_DATA.raw 過濾進 EATY_DATA.canteens /
+ *      categories / dishes（app.js 只讀這三份作用中檢視）。
+ *   3. 提供抽籤黑名單（雲端 roll_blacklist 優先，失敗用本地清單）。
  *
- * 欄位說明：
- *  dishes: { id, canteenId, cat, zh, en, price, photo?, descZh?, descEn?, tags? }
- *    photo 不填 → 自動用分類 fallback 字塊
- *    tags: 'signature'（招牌）'spicy'（辣）'value'（抵食）'sweet'（甜）
- *  sampleReviews: 種子範例評論（書面語），UI 上會標示「範例」，可一鍵隱藏；真實評論由使用者產生。
- */
-window.CITYU_EATS_DATA = {
-
-  /* meal ＝ 這個分類屬於哪幾個餐段（早餐／午餐／晚餐）。
-   * 寫成逗號分隔字串：'breakfast' / 'lunch,dinner' / 'breakfast,lunch,dinner'。
-   * 留空 → 不分餐，只在「全部」看得到（例如 $1 環保餐盒）。
-   * ⚠️ 線上菜單的分類來自 Supabase（categories 表），改這裡只影響斷網時的後備。 */
-  categories: [
-    { id: 'rice',     zh: '中式飯類', en: 'Rice & Chinese',   meal: 'lunch,dinner' },
-    { id: 'noodle',   zh: '粉麵',     en: 'Noodles',           meal: 'lunch,dinner' },
-    { id: 'japanese', zh: '日韓',     en: 'Japanese & Korean', meal: 'lunch,dinner' },
-    { id: 'asian',    zh: '東南亞',   en: 'Southeast Asian',   meal: 'lunch,dinner' },
-    { id: 'western',  zh: '西式',     en: 'Western',           meal: 'lunch,dinner' },
-    { id: 'snack',    zh: '小食',     en: 'Snacks',            meal: 'lunch,dinner' },
-    { id: 'drinks',   zh: '飲品甜品', en: 'Drinks & Dessert',  meal: 'lunch,dinner' },
-  ],
-
-  canteens: [
-    {
-      id: 'ac1', short: 'AC1',
-      zh: '城大食坊', en: 'City Express',
-      bldgZh: '康樂樓 5 樓', bldgEn: '5/F, Amenities Building',
-      hoursZh: '週一至五 07:30–20:00・週六至日 08:00–18:00（公眾假期休息）',
-      hoursEn: 'Mon–Fri 07:30–20:00 · Sat–Sun 08:00–18:00 (PH closed)',
-      color: 'ac1',
-      photo: 'assets/roast-pork-shop.jpg',
-      orderUrl: 'https://csd.order.place/home/store/112870',
-      factZh: '電話 +852 2971-0668・付款：現金／信用卡／八達通／AlipayHK／Apple Pay／BoC Pay／PayMe／WeChat Pay HK',
-      factEn: 'Tel +852 2971-0668 · Payment: Cash / Credit Card / Octopus / AlipayHK / Apple Pay / BoC Pay / PayMe / WeChat Pay HK',
-    },
-    {
-      id: 'ac2', short: 'AC2',
-      zh: 'AC2 Canteen', en: 'AC2 Canteen',
-      bldgZh: '李達三葉耀珍學術樓 3 樓', bldgEn: '3/F, Li Dak Sum Yip Yio Chin Academic Building',
-      hoursZh: '週一至日 07:30–21:00（農曆新年休息）',
-      hoursEn: 'Mon–Sun 07:30–21:00 (CNY closed)',
-      color: 'ac2',
-      photo: 'assets/dishes-table.jpg',
-      factZh: '電話 +852 2312-7928・付款：現金／信用卡／八達通／AlipayHK／Apple Pay／BoC Pay／PayMe／Union Pay／WeChat Pay HK',
-      factEn: 'Tel +852 2312-7928 · Payment: Cash / Credit Card / Octopus / AlipayHK / Apple Pay / BoC Pay / PayMe / UnionPay / WeChat Pay HK',
-    },
-    {
-      id: 'ac3', short: 'AC3',
-      zh: 'AC3 Bistro', en: 'AC3 Bistro',
-      bldgZh: '劉鳴煒學術樓 7 樓', bldgEn: '7/F, Lau Ming Wai Academic Building',
-      hoursZh: '週一至五 07:30–21:00（週日及公眾假期休息）',
-      hoursEn: 'Mon–Fri 07:30–21:00 (Sun & PH closed)',
-      color: 'ac3',
-      photo: 'assets/sandwiches-board.jpg',
-      orderUrl: 'https://inth5.qmai.com/mp-monorepo-inth5/web/index.html#/pages/takefood/index?store_id=221033&multi_id=328009',
-      factZh: '電話 +852 4683-4908・付款：現金／信用卡／八達通／AlipayHK／WeChat Pay HK',
-      factEn: 'Tel +852 4683-4908 · Payment: Cash / Credit Card / Octopus / AlipayHK / WeChat Pay HK',
-    },
-  ],
-
-  dishes: [
-    /* ── AC1 城大食坊（真實菜單，2026-10-02 抄錄）────────────── */
-    { id: 'ac1-sampan-fan',    canteenId: 'ac1', cat: 'rice', zh: '鹹蛋三寶飯', en: 'Salted Egg Three-Treasure Rice', price: 32.7, photo: 'assets/chicken-rice-bowl.jpg', tags: ['value'], descZh: '鹹蛋＋三款小菜鋪面，一盒滿足。', descEn: 'Salted egg and three toppings over rice — a full box of comfort.' },
-    { id: 'ac1-dual-roast',    canteenId: 'ac1', cat: 'rice', zh: '燒味雙拼飯', en: 'Dual Roast Meat Rice', price: 28.6, photo: 'assets/roast-ducks-display.jpg', tags: ['signature', 'value'], descZh: '即燒叉燒、燒鴨等任選兩款，食堂主打。', descEn: 'Pick two from char siu, roast duck and more — the canteen\'s headliner.' },
-    { id: 'ac1-single-roast',  canteenId: 'ac1', cat: 'rice', zh: '燒味單拼飯', en: 'Roast Meat Rice', price: 22, tags: ['value'], descZh: '最平價的燒味飯，學生恩物。', descEn: 'The cheapest roast rice on campus — a broke-student staple.' },
-    { id: 'ac1-duck-spicy',    canteenId: 'ac1', cat: 'rice', zh: '麻辣肉丁‧明爐燒鴨飯', en: 'Spicy Diced Pork & Roast Duck Rice', price: 44, photo: 'assets/duck-rice.jpg', tags: ['spicy'] },
-    { id: 'ac1-koushui-chicken', canteenId: 'ac1', cat: 'rice', zh: '口水雞‧白飯', en: 'Mouth-watering Chicken & Rice', price: 40.9, tags: ['spicy'] },
-    { id: 'ac1-beef-noodle',   canteenId: 'ac1', cat: 'noodle', zh: '台式麻辣牛肉麵', en: 'Taiwanese Spicy Beef Noodle Soup', price: 43, photo: 'assets/noodle-beef.jpg', tags: ['spicy', 'signature'], descZh: '湯頭濃郁、牛肉大塊，冬天必食。', descEn: 'Rich broth and thick-cut beef — a winter must.' },
-    { id: 'ac1-suanla-mixian', canteenId: 'ac1', cat: 'noodle', zh: '酸辣米線', en: 'Hot & Sour Rice Noodles', price: 22.5, photo: 'assets/noodle-rice.jpg', tags: ['spicy', 'value'] },
-    { id: 'ac1-duck-hofun',    canteenId: 'ac1', cat: 'noodle', zh: '鴨腿湯河粉', en: 'Duck Leg Rice Noodle Soup', price: 39, photo: 'assets/noodle-hofun.jpg' },
-    { id: 'ac1-fishball-fun',  canteenId: 'ac1', cat: 'noodle', zh: '魚蛋湯粉', en: 'Fish Ball Noodle Soup', price: 29.7, photo: 'assets/noodle-thai.jpg', tags: ['value'] },
-    { id: 'ac1-mushroom-noodle', canteenId: 'ac1', cat: 'noodle', zh: '豉油皇菇絲炒麵', en: 'Soy Sauce Mushroom Noodles', price: 12.5, tags: ['value'], descZh: '$12.5 有菇有麵，超值之最。', descEn: 'Twelve dollars fifty — unbeatable value.' },
-    { id: 'ac1-beef-don',      canteenId: 'ac1', cat: 'japanese', zh: '洋蔥牛肉丼', en: 'Beef & Onion Donburi', price: 49.1, photo: 'assets/donburi.jpg', tags: ['signature'] },
-    { id: 'ac1-onsen-don',     canteenId: 'ac1', cat: 'japanese', zh: '汁煮豚肉‧溫泉玉子丼', en: 'Simmered Pork & Onsen Egg Donburi', price: 49.1 },
-    { id: 'ac1-curry-katsu',   canteenId: 'ac1', cat: 'japanese', zh: '咖喱唐揚雞飯', en: 'Curry Fried Chicken Rice', price: 51.2, photo: 'assets/curry-katsu.jpg', tags: ['signature'], descZh: '日式咖喱配炸雞，食堂日系代表。', descEn: 'Japanese curry with fried chicken — the Japanese corner\'s star.' },
-    { id: 'ac1-teriyaki-udon', canteenId: 'ac1', cat: 'japanese', zh: '照燒雞扒烏冬', en: 'Teriyaki Chicken Udon', price: 46, photo: 'assets/udon.jpg' },
-    { id: 'ac1-thai-chicken',  canteenId: 'ac1', cat: 'asian', zh: '泰式水門雞飯‧例湯', en: 'Thai Hainanese Chicken Rice & Soup', price: 49.1 },
-    { id: 'ac1-lemongrass-leg', canteenId: 'ac1', cat: 'asian', zh: '香茅雞髀‧油飯', en: 'Lemongrass Chicken Leg & Oiled Rice', price: 38.9 },
-    { id: 'ac1-cha-lau-fan',   canteenId: 'ac1', cat: 'asian', zh: '扎肉‧肉燥飯', en: 'Vietnamese Pork & Minced Pork Rice', price: 39 },
-    { id: 'ac1-thai-fishcake', canteenId: 'ac1', cat: 'asian', zh: '泰式魚餅‧肉燥飯', en: 'Thai Fish Cake & Minced Pork Rice', price: 39 },
-    { id: 'ac1-pepperoni',     canteenId: 'ac1', cat: 'western', zh: '辣肉腸披薩', en: 'Pepperoni Pizza', price: 49.1, photo: 'assets/pizza.jpg', tags: ['signature'], descZh: '即叫即製，需等 15–20 分鐘，值得等候。', descEn: 'Made to order in 15–20 minutes — worth the wait.' },
-    { id: 'ac1-hawaii-pizza',  canteenId: 'ac1', cat: 'western', zh: '夏威夷菠蘿火腿芝士披薩', en: 'Hawaiian Pineapple Ham Cheese Pizza', price: 49.1 },
-    { id: 'ac1-porkchop-bun',  canteenId: 'ac1', cat: 'snack', zh: '芥末吉列豬扒包‧薯條', en: 'Wasabi Katsu Pork Chop Bun & Fries', price: 36.8, photo: 'assets/sandwich-making.jpg', descZh: '豬扒炸至香脆，配薯條就是豐盛一餐。', descEn: 'Crispy katsu pork chop in a bun with fries.' },
-    { id: 'ac1-fried-chicken', canteenId: 'ac1', cat: 'snack', zh: '炸雞髀‧薯條', en: 'Fried Chicken Leg & Fries', price: 28.6, photo: 'assets/fried-chicken.jpg' },
-    { id: 'ac1-french-toast',  canteenId: 'ac1', cat: 'snack', zh: '西多士', en: 'Hong Kong French Toast', price: 24.6, photo: 'assets/french-toast.jpg', tags: ['sweet'], descZh: '茶餐廳經典，下午茶之魂。', descEn: 'The cha chaan teng classic — afternoon tea\'s soul.' },
-    { id: 'ac1-wun-jai-gee',   canteenId: 'ac1', cat: 'snack', zh: '碗仔翅', en: 'Street-style "Shark Fin" Soup', price: 18, photo: 'assets/porridge.jpg', tags: ['value'] },
-    { id: 'ac1-iced-milktea',  canteenId: 'ac1', cat: 'drinks', zh: '凍奶茶', en: 'Iced Milk Tea', price: 7.5, photo: 'assets/milk-tea.jpg', tags: ['signature', 'value'], descZh: '$7.5 一杯，全場最超值。', descEn: 'Seven fifty a cup — the best deal in the building.' },
-    { id: 'ac1-iced-yuenyeung', canteenId: 'ac1', cat: 'drinks', zh: '凍鴛鴦', en: 'Iced Yuenyeung (Tea-Coffee Mix)', price: 7.5, tags: ['value'] },
-    { id: 'ac1-latte-large',   canteenId: 'ac1', cat: 'drinks', zh: '大凍鮮奶咖啡（16oz）', en: 'Large Iced Latte (16oz)', price: 30.7, photo: 'assets/latte.jpg' },
-
-    /* ── AC2 Canteen（代表性菜品，價錢約數）────────────────── */
-    { id: 'ac2-two-dish',      canteenId: 'ac2', cat: 'rice', zh: '抵食雙餸飯', en: 'Two-Dish Rice (Legendarily Cheap)', price: 30, photo: 'assets/chicken-rice-bowl.jpg', tags: ['signature', 'value'], descZh: '$30 兩餸一飯，全城大最超值，中午大排長龍。', descEn: 'Two dishes over rice for HK$30 — the best value on campus, queue at noon.' },
-    { id: 'ac2-claypot',       canteenId: 'ac2', cat: 'rice', zh: '北菇滑雞煲仔飯', en: 'Mushroom & Chicken Claypot Rice', price: 38, photo: 'assets/hotpot.jpg', tags: ['signature'], descZh: '秋冬限定，鍋巴最為香脆。', descEn: 'Autumn–winter special; the crispy bottom rice is the point.' },
-    { id: 'ac2-mapo-tofu',     canteenId: 'ac2', cat: 'rice', zh: '麻婆豆腐飯', en: 'Mapo Tofu Rice', price: 26, tags: ['spicy', 'value'] },
-    { id: 'ac2-yeungchow',     canteenId: 'ac2', cat: 'rice', zh: '揚州炒飯', en: 'Yeung Chow Fried Rice', price: 28 },
-    { id: 'ac2-beef-hofun',    canteenId: 'ac2', cat: 'noodle', zh: '干炒牛河', en: 'Stir-fried Beef Flat Noodles', price: 32 },
-    { id: 'ac2-satay-beef',    canteenId: 'ac2', cat: 'noodle', zh: '沙嗲牛肉麵', en: 'Satay Beef Noodle Soup', price: 28 },
-    { id: 'ac2-mango-shrimp',  canteenId: 'ac2', cat: 'asian', zh: '凍芒果蝦沙律', en: 'Chilled Mango Shrimp Salad', price: 28, photo: 'assets/mango-salad.jpg', tags: ['signature'], descZh: 'AC2 名物，夏天首選。', descEn: 'The AC2 signature — perfect in summer.' },
-    { id: 'ac2-curry-brisket', canteenId: 'ac2', cat: 'asian', zh: '咖喱牛腩飯', en: 'Curry Beef Brisket Rice', price: 34, tags: ['spicy'] },
-    { id: 'ac2-salt-chicken-wing', canteenId: 'ac2', cat: 'snack', zh: '椒鹽雞翼', en: 'Salt & Pepper Chicken Wings', price: 22 },
-    { id: 'ac2-milk-tea',      canteenId: 'ac2', cat: 'drinks', zh: '凍檸檬茶', en: 'Iced Lemon Tea', price: 9 },
-
-    /* ── AC3 Bistro（代表性菜品，價錢約數）────────────────── */
-    { id: 'ac3-tuna-pizza',    canteenId: 'ac3', cat: 'western', zh: '吞拿魚披薩', en: 'Tuna Pizza', price: 42, photo: 'assets/pizza.jpg', tags: ['signature'], descZh: 'AC3 鎮店之寶，經常售罄。', descEn: 'The house icon — often sells out.' },
-    { id: 'ac3-carbonara',     canteenId: 'ac3', cat: 'western', zh: '卡邦尼意粉', en: 'Spaghetti Carbonara', price: 38, photo: 'assets/carbonara.jpg' },
-    { id: 'ac3-bolognese',     canteenId: 'ac3', cat: 'western', zh: '肉醬意粉', en: 'Spaghetti Bolognese', price: 36, photo: 'assets/bolognese.jpg' },
-    { id: 'ac3-chicken-sandwich', canteenId: 'ac3', cat: 'western', zh: '烤雞三文治', en: 'Roast Chicken Sandwich', price: 32, photo: 'assets/sandwich-making.jpg' },
-    { id: 'ac3-udon',          canteenId: 'ac3', cat: 'japanese', zh: '海鮮烏冬', en: 'Seafood Udon', price: 36 },
-    { id: 'ac3-latte',         canteenId: 'ac3', cat: 'drinks', zh: '鮮奶咖啡', en: 'Latte', price: 24, photo: 'assets/latte.jpg' },
-
-    /* 麻辣米線攤位備註：AC2/AC3 資料為代表性內容，請以現場為準並自行增修 */
-  ],
-
-  sampleReviews: [
-    { id: 's01', dishId: 'ac2-two-dish', rating: 5, verdict: 'must', nickname: '窮學生代表', text: '$30 的兩餸飯真的無可匹敵，叉燒份量也足，記得 12 點前下去就不用排太久。', created: '2026-09-26T12:20:00+08:00' },
-    { id: 's02', dishId: 'ac2-two-dish', rating: 4, verdict: 'ok', nickname: 'Exchange Eric', text: 'Unbeatable for the price. English menu is a printed A4 on the glass, just point. The queue moves fast.', created: '2026-09-24T13:05:00+08:00' },
-    { id: 's03', dishId: 'ac1-iced-milktea', rating: 5, verdict: 'must', nickname: '奶茶魂', text: '七元半有這個質素，茶味足不會太甜，我每天一杯。', created: '2026-09-29T15:40:00+08:00' },
-    { id: 's04', dishId: 'ac1-beef-noodle', rating: 5, verdict: 'must', nickname: '麵癡', text: '湯底有牛味並非味精水，牛肉是有筋有膏的那種，43 元很值。', created: '2026-09-22T12:35:00+08:00' },
-    { id: 's05', dishId: 'ac1-beef-noodle', rating: 3, verdict: 'ok', nickname: '台灣同學會', text: '對台灣人來說不算麻辣，但在校園內是可以接受的牛肉麵。Decent but not mala enough.', created: '2026-09-25T18:30:00+08:00' },
-    { id: 's06', dishId: 'ac1-mushroom-noodle', rating: 4, verdict: 'must', nickname: '十二蚊戰士', text: '$12.5 有菇有麵，豉油皇炒得香，CP 值爆錶。', created: '2026-09-30T12:10:00+08:00' },
-    { id: 's07', dishId: 'ac1-pepperoni', rating: 4, verdict: 'must', nickname: 'Pizza Friday', text: '15–20 分鐘現叫現製，餅底意外地脆。一次買兩件與朋友分享最划算。', created: '2026-09-27T17:55:00+08:00' },
-    { id: 's08', dishId: 'ac3-tuna-pizza', rating: 5, verdict: 'must', nickname: 'AC3常客', text: '吞拿魚給得慷慨，星期五下午三點去通常有位，安安靜靜吃完整個午餐。', created: '2026-09-20T15:10:00+08:00' },
-    { id: 's09', dishId: 'ac3-carbonara', rating: 2, verdict: 'avoid', nickname: '意粉警長', text: '醬汁稀得像湯，意粉煮得過爛。這個價錢我寧願走去 AC2。', created: '2026-09-23T13:15:00+08:00' },
-    { id: 's10', dishId: 'ac1-suanla-mixian', rating: 4, verdict: 'must', nickname: '辣妹一號', text: '酸辣度很合香港人口味，22 元就有一餐，加豆腐泡更好吃。', created: '2026-09-28T12:45:00+08:00' },
-    { id: 's11', dishId: 'ac2-claypot', rating: 4, verdict: 'must', nickname: '飯焦控', text: '鍋巴鏟得很漂亮，臘味季節記得加錢轉臘味煲。', created: '2026-09-21T12:50:00+08:00' },
-    { id: 's12', dishId: 'ac2-mapo-tofu', rating: 2, verdict: 'avoid', nickname: '豆腐愛好者', text: '豆腐只有數粒，汁多於料，下單前想清楚。', created: '2026-09-29T13:00:00+08:00' },
-    { id: 's13', dishId: 'ac1-french-toast', rating: 3, verdict: 'ok', nickname: '3pm 甜點', text: '正常茶餐廳水準，蛋味足但糖漿只有細細一瓶。', created: '2026-09-19T15:20:00+08:00' },
-    { id: 's14', dishId: 'ac1-curry-katsu', rating: 4, verdict: 'must', nickname: '咖喱人', text: '炸雞現炸香脆，咖喱不會太辣，吃膩了飯餐可以換換口味。', created: '2026-09-30T18:20:00+08:00' },
-    { id: 's15', dishId: 'ac3-bolognese', rating: 4, verdict: 'must', nickname: 'Pasta Person', text: 'Solid bolognese for a campus bistro. Sauce is homemade-tasting, not out of a jar.', created: '2026-09-26T14:00:00+08:00' },
-    { id: 's16', dishId: 'ac1-duck-hofun', rating: 3, verdict: 'ok', nickname: '河粉評論員', text: '鴨腿給足整隻算有誠意，不過湯偏鹹，點少鹹比較好。', created: '2026-09-24T12:40:00+08:00' },
-    { id: 's17', dishId: 'ac3-carbonara', rating: 1, verdict: 'avoid', nickname: 'Lau Ming Wai 人辦', text: '第二次給機會還是一樣，醬與粉完全不配。避。', created: '2026-09-30T13:30:00+08:00' },
-    { id: 's18', dishId: 'ac2-mapo-tofu', rating: 2, verdict: 'avoid', nickname: '無飯不歡', text: '自己煮都比這盒好，豆腐碎了又不入味。', created: '2026-09-27T12:25:00+08:00' },
-  ],
-};
-
-/* ═══ 雲端菜單載入器 ═══
- * 菜單現存放於 Supabase（canteens / dishes 表），改菜單去 dashboard → Table Editor，
- * 網站重新整理即生效，毋須重新部署。
- * 載入順序：雲端 → 本地快取 → 下面內建資料（三層後備，離線/斷網都不會白屏）。
- * 執行 Supabase 菜單表的 SQL 在專案根目錄 supabase-menu.sql。
+ * 餐段（meal）：分類的 meal 是逗號分隔字串，這裡統一解析成固定次序的陣列；
+ * 空陣列＝不分餐（只在「全日」出現）。接受中文別名與全角分隔號。
  */
 (function () {
   'use strict';
-  const CFG = window.CITYU_EATS_CONFIG;
-  // v6：canteens 多了 alias（食堂卡小字可自訂：5380 → AC1、CMC → CMC）
-  // v5：新增第 5 間食堂 5380 Cafe（55 道）
-  // v4：四季茶坊的 order_url 已清空（它沒有獨立點餐平台）；v3 是 categories 多了 order_url
-  const CACHE_KEY = 'cityu-eats:menu-cache:v6';
+  const CFG = window.EATY_CONFIG;
+  const DATA = window.EATY_DATA;
 
-  /* ── 餐段（meal）解析 ─────────────────────────
-   * 雲端 categories.meal 是逗號分隔字串（例如 'lunch,dinner'），這裡統一轉成
-   * 固定次序的陣列。接受中文別名與全角分隔號；'all'／'三餐' ＝ 三餐通用；
-   * 空值 → []（不分餐：只在「全部」看得到）。
-   */
-  const MEALS = ['breakfast', 'lunch', 'dinner'];
+  /* ── 餐段解析 ─────────────────────────────── */
+  const MEALS = ['breakfast', 'lunch', 'tea', 'dinner'];
   const MEAL_ALIAS = {
     b: 'breakfast', breakfast: 'breakfast', 早餐: 'breakfast', 早點: 'breakfast', 早市: 'breakfast',
     l: 'lunch', lunch: 'lunch', 午餐: 'lunch', 中餐: 'lunch', 午市: 'lunch',
+    t: 'tea', tea: 'tea', 下午茶: 'tea', 茶餐: 'tea', 茶市: 'tea', 茶點: 'tea', 下午: 'tea',
     d: 'dinner', dinner: 'dinner', supper: 'dinner', 晚餐: 'dinner', 晚市: 'dinner',
   };
   const MEAL_ALL = ['all', 'always', 'day', '全天', '三餐', '全日'];
@@ -181,109 +39,136 @@ window.CITYU_EATS_DATA = {
       if (MEAL_ALL.indexOf(t) >= 0) { MEALS.forEach((m) => set.add(m)); continue; }
       if (MEAL_ALIAS[t]) set.add(MEAL_ALIAS[t]);
     }
-    return MEALS.filter((m) => set.has(m));   // 固定次序，方便除錯與比對
+    return MEALS.filter((m) => set.has(m));
   }
   function normalizeCategory(r) {
     return {
-      id: r.id, zh: r.zh || r.id, en: r.en || r.zh || r.id, meal: parseMeal(r.meal),
-      // 檔口（＝分類）的官方點餐連結；只有部分 AC2 檔口有，其餘為 null
-      orderUrl: r.order_url || null,
+      id: r.id, uni: r.uni,
+      zh: r.zh || r.id, en: r.en || r.zh || r.id,
+      meal: parseMeal(r.meal),
+      // 檔口（＝分類）自己的官方點餐連結，選填。有值時食堂頁的分類標題列會多一顆
+      // 「網上點餐 ↗」膠囊（AC2 的西北麵館／餃餃陣就是這種：食堂沒有總站，檔口各自有）。
+      orderUrl: r.orderUrl || '',
     };
   }
 
-  // 內建分類的 meal 是字串，先在這裡轉成陣列，讓「雲端／快取／內建」三種來源形狀一致
-  window.CITYU_EATS_DATA.categories.forEach((c) => { c.meal = parseMeal(c.meal); });
+  // 先把原始分類的 meal 統一成陣列，讓過濾進來的形狀一致
+  DATA.raw.categories.forEach((c) => { c.meal = parseMeal(c.meal); });
 
-  /* ── 抽籤黑名單：「今天吃什麼」要排除的菜品／分類 ──
-   * 來源 ＝ 雲端 roll_blacklist 表（前端只讀，在 dashboard 加／刪一行即時生效）。
-   * 讀不到（離線、表未建立）才用下面這份內建清單後備；雲端回了空陣列＝真的不排除任何東西。
-   */
-  const ROLL_FALLBACK_ROWS = [
-    { kind: 'category', value: 'drinks' },          // 飲品甜品（AC2／AC3）
-    { kind: 'category', value: '飲品' },             // AC1 熱／凍飲料
-    { kind: 'category', value: '特色飲品' },         // AC1 汽泡茶／梳打
-    { kind: 'category', value: 'Coffee Lounge' },   // AC1 咖啡角
-    { kind: 'category', value: '其他' },             // 環保餐盒／餐具，非食品
-  ];
-  function blacklistFromRows(rows) {
-    const dishes = new Set();
-    const categories = new Set();
-    for (const r of rows || []) {
-      const kind = String((r && r.kind) || '').trim().toLowerCase();
-      const value = String((r && r.value) != null ? r.value : '').trim();
-      if (!value) continue;
-      if (kind === 'dish') dishes.add(value);
-      else if (kind === 'category') categories.add(value);
-    }
-    return { dishes, categories };
+  /* ── 抽籤黑名單（本地）────────────────────── */
+  function blacklistSets() {
+    const bl = DATA.rollBlacklist || {};
+    return {
+      dishes: new Set(Array.isArray(bl.dishes) ? bl.dishes : []),
+      categories: new Set(Array.isArray(bl.categories) ? bl.categories : []),
+    };
   }
 
-  function apply(canteens, dishes, categories) {
-    const D = window.CITYU_EATS_DATA;
-    D.canteens.length = 0;
-    D.canteens.push(...canteens);
-    D.dishes.length = 0;
-    D.dishes.push(...dishes);
-    if (categories && categories.length) {
-      D.categories.length = 0;
-      D.categories.push(...categories);
+  /* ── 目前大學 ─────────────────────────────── */
+  function savedUni() {
+    try {
+      const v = localStorage.getItem(CFG.UNI_KEY);
+      if (v && DATA.universities.some((u) => u.id === v)) return v;
+    } catch (e) { /* ignore */ }
+    return CFG.DEFAULT_UNI || (DATA.universities[0] && DATA.universities[0].id) || '';
+  }
+
+  /* ── 雲端（Supabase）───────────────────────────
+   * v2.0.0 起資料庫是唯一來源：universities / canteens / categories / dishes。
+   * 任何一步失敗（離線、RLS 擋住、逾時、表還是空的）就整批退回本地
+   * js/data/*.js —— 寧可顯示舊資料，也不要半殘的畫面。
+   */
+  const CLOUD_TIMEOUT = 8000;
+  const PAGE = 1000;
+
+  function cloudHeaders(extra) {
+    return Object.assign({
+      apikey: CFG.SUPABASE_ANON_KEY,
+      Authorization: 'Bearer ' + CFG.SUPABASE_ANON_KEY,
+    }, extra || {});
+  }
+
+  /** 分頁抓整張表（Supabase 預設單次上限 1000 列，HKBU 那種規模會截斷） */
+  async function cloudGetAll(path, signal) {
+    const base = String(CFG.SUPABASE_URL).replace(/\/$/, '') + '/rest/v1/' + path;
+    const out = [];
+    for (let from = 0; from < 40000; from += PAGE) {
+      const res = await fetch(base, {
+        headers: cloudHeaders({ Range: from + '-' + (from + PAGE - 1) }),
+        signal,
+      });
+      if (!res.ok) throw new Error('http ' + res.status);
+      const rows = await res.json();
+      if (!Array.isArray(rows)) throw new Error('bad payload');
+      out.push(...rows);
+      if (rows.length < PAGE) break;
     }
+    return out;
+  }
+
+  function normalizeUniversity(r) {
+    return {
+      id: r.id,
+      short: r.short || String(r.id || '').toUpperCase(),
+      zh: r.zh || r.id, en: r.en || r.zh || r.id,
+      cityZh: r.city_zh || '', cityEn: r.city_en || '',
+      taglineZh: r.tagline_zh || '', taglineEn: r.tagline_en || '',
+      noteZh: r.note_zh || '', noteEn: r.note_en || '',
+      officialUrl: r.official_url || '', color: r.color || '',
+      photo: r.photo || '', photoCredit: r.photo_credit || '',
+      heroDishId: r.hero_dish_id || '',
+    };
   }
   function normalizeCanteen(r) {
     return {
-      id: r.id, short: (r.id || '').toUpperCase(),
+      id: r.id, uni: r.uni || '',
+      // alias ＝「食堂卡名旁邊那行小字」，已上線版（單校版 v0.14.1）的規則：
+      // alias 有值就用它（5380 Cafe → AC1、CMCAFE → CMC），否則退回另一語言名稱。
+      // 這裡照抄，免得同一個食堂在兩版顯示不同名字。
+      alias: (r.alias && String(r.alias).trim()) || '',
+      short: r.short || String(r.id || '').toUpperCase(),
       zh: r.zh || r.en || r.id, en: r.en || r.zh || r.id,
-      // alias ＝ 食堂卡名旁邊那行小字（可空）。空 → 前端自己決定（見 app.js canteenAltName）
-      alias: (r.alias || '').trim(),
       bldgZh: r.bldg_zh || '', bldgEn: r.bldg_en || '',
       hoursZh: r.hours_zh || '', hoursEn: r.hours_en || '',
       factZh: r.fact_zh || '', factEn: r.fact_en || '',
-      color: r.id, photo: r.photo || '', orderUrl: r.order_url || null,
+      color: r.color || r.id, photo: r.photo || '',
+      orderUrl: r.order_url || null,
     };
   }
   function normalizeDish(r) {
     return {
-      id: r.id, canteenId: r.canteen_id, cat: r.category,
-      zh: r.zh, en: r.en, price: Number(r.price),
+      id: r.id, uni: r.uni || '', canteenId: r.canteen_id, cat: r.category,
+      zh: r.zh, en: r.en || r.zh,
+      price: r.price == null || r.price === '' ? null : Number(r.price),
       photo: r.photo || '', descZh: r.desc_zh || '', descEn: r.desc_en || '',
       tags: Array.isArray(r.tags) ? r.tags : [],
+      available: r.available !== false,
     };
   }
-  const ROLL_TABLE = CFG.SUPABASE_ROLL_TABLE || 'roll_blacklist';
 
   async function fetchCloud() {
     if (!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY) return null;
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 5000);
-    const headers = { apikey: CFG.SUPABASE_ANON_KEY };
+    const timer = setTimeout(() => ctl.abort(), CLOUD_TIMEOUT);
     try {
-      const [cRes, dRes, catRes, rollRes] = await Promise.all([
-        fetch(CFG.SUPABASE_URL + '/rest/v1/canteens?select=*&order=sort.asc', { headers, signal: ctl.signal }),
-        fetch(CFG.SUPABASE_URL + '/rest/v1/dishes?select=*&order=sort.asc', { headers, signal: ctl.signal }),
-        fetch(CFG.SUPABASE_URL + '/rest/v1/categories?select=*&order=sort.asc', { headers, signal: ctl.signal }),
-        // 黑名單是加分項：這支掛掉（表未建立、被 RLS 擋、斷線）不可以拖垮整個菜單載入
-        fetch(CFG.SUPABASE_URL + '/rest/v1/' + ROLL_TABLE + '?select=kind,value', { headers, signal: ctl.signal })
-          .catch(() => null),
+      const [us, cs, cats, ds] = await Promise.all([
+        cloudGetAll('universities?select=*&order=sort.asc', ctl.signal),
+        cloudGetAll('canteens?select=*&order=sort.asc', ctl.signal),
+        cloudGetAll('categories?select=*&order=sort.asc', ctl.signal),
+        cloudGetAll('dishes?select=*&order=sort.asc', ctl.signal),
       ]);
-      if (!cRes.ok || !dRes.ok) return null;
-      const cs = await cRes.json();
-      const ds = await dRes.json();
-      if (!Array.isArray(cs) || !Array.isArray(ds) || !cs.length || !ds.length) return null;
-      let cats = null;
-      if (catRes && catRes.ok) {
-        const list = await catRes.json();
-        if (Array.isArray(list) && list.length) cats = list.map(normalizeCategory);
-      }
-      let blacklist = null;
-      if (rollRes && rollRes.ok) {
-        const rows = await rollRes.json();
-        if (Array.isArray(rows)) blacklist = blacklistFromRows(rows);   // 空陣列＝真的不排除任何東西
-      }
+      if (!us.length || !cs.length || !ds.length) return null;
+      let black = null;
+      try {
+        const rows = await cloudGetAll((CFG.SUPABASE_ROLL_TABLE || 'roll_blacklist') + '?select=kind,value', ctl.signal);
+        black = rows.filter((x) => x.kind === 'category').map((x) => x.value);
+      } catch (e) { /* 黑名單是加分項，掛掉不影響菜單 */ }
       return {
+        universities: us.map(normalizeUniversity),
         canteens: cs.map(normalizeCanteen),
+        categories: cats.length ? cats.map(normalizeCategory) : null,
         dishes: ds.filter((d) => d.available !== false).map(normalizeDish),
-        categories: cats,
-        blacklist,
+        blackCategories: black,
       };
     } catch (e) {
       return null;
@@ -292,53 +177,64 @@ window.CITYU_EATS_DATA = {
     }
   }
 
-  function serializeBlacklist(bl) {
-    if (!bl) return null;
-    return { dishes: Array.from(bl.dishes), categories: Array.from(bl.categories) };
-  }
-  function deserializeBlacklist(obj) {
-    if (!obj) return null;
-    return {
-      dishes: new Set(Array.isArray(obj.dishes) ? obj.dishes : []),
-      categories: new Set(Array.isArray(obj.categories) ? obj.categories : []),
-    };
-  }
+  window.EatyMenu = {
+    source: 'local',
+    rollBlacklistSource: 'local',
+    currentUni: '',
+    universities: DATA.universities,
+    rollBlacklist: blacklistSets(),
 
-  window.CityuEatsMenu = {
-    source: 'bundled',                       // 'cloud' | 'cache' | 'bundled'
-    rollBlacklist: blacklistFromRows(ROLL_FALLBACK_ROWS),
-    rollBlacklistSource: 'fallback',         // 'cloud' | 'cache' | 'fallback'
+    university(id) {
+      return DATA.universities.find((u) => u.id === id) || DATA.universities[0] || null;
+    },
+
+    /** 切換目前大學：把該校的食堂／分類／菜品過濾進作用中檢視。 */
+    setUniversity(id) {
+      const uni = this.university(id);
+      if (!uni) return null;
+      this.currentUni = uni.id;
+
+      const raw = DATA.raw;
+      const canteens = raw.canteens.filter((c) => c.uni === uni.id);
+      const canteenIds = new Set(canteens.map((c) => c.id));
+      const categories = raw.categories.filter((c) => c.uni === uni.id).map(normalizeCategory);
+      const dishes = raw.dishes.filter((d) => d.uni === uni.id || canteenIds.has(d.canteenId));
+
+      DATA.canteens.length = 0; DATA.canteens.push(...canteens);
+      DATA.categories.length = 0; DATA.categories.push(...categories);
+      DATA.dishes.length = 0; DATA.dishes.push(...dishes);
+
+      this.rollBlacklist = blacklistSets();
+
+      try { localStorage.setItem(CFG.UNI_KEY, uni.id); } catch (e) { /* ignore */ }
+      return uni;
+    },
+
+    /** 啟動時用：先試雲端，連不上才用本地；最後套用上次選的大學。 */
     async load() {
       const cloud = await fetchCloud();
       if (cloud) {
-        apply(cloud.canteens, cloud.dishes, cloud.categories);
-        if (cloud.blacklist) {
-          this.rollBlacklist = cloud.blacklist;
-          this.rollBlacklistSource = 'cloud';
+        DATA.universities.length = 0;
+        DATA.universities.push(...cloud.universities);
+        DATA.raw.canteens.length = 0;
+        DATA.raw.canteens.push(...cloud.canteens);
+        DATA.raw.dishes.length = 0;
+        DATA.raw.dishes.push(...cloud.dishes);
+        if (cloud.categories) {
+          DATA.raw.categories.length = 0;
+          DATA.raw.categories.push(...cloud.categories);
         }
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({
-            ts: Date.now(), canteens: cloud.canteens, dishes: cloud.dishes,
-            categories: cloud.categories, blacklist: serializeBlacklist(cloud.blacklist),
-          }));
-        } catch (e) { /* 儲存空間滿了就算 */ }
+        if (cloud.blackCategories && cloud.blackCategories.length) {
+          DATA.rollBlacklist.categories = cloud.blackCategories;
+        }
+        this.universities = DATA.universities;
+        this.rollBlacklistSource = 'cloud';
         this.source = 'cloud';
-        return this.source;
+      } else {
+        this.source = 'local';
+        this.rollBlacklistSource = 'local';
       }
-      try {
-        const raw = localStorage.getItem(CACHE_KEY);
-        if (raw) {
-          const c = JSON.parse(raw);
-          if (c && Array.isArray(c.dishes) && c.dishes.length && Array.isArray(c.canteens) && c.canteens.length) {
-            apply(c.canteens, c.dishes, c.categories);
-            const bl = deserializeBlacklist(c.blacklist);
-            if (bl) { this.rollBlacklist = bl; this.rollBlacklistSource = 'cache'; }
-            this.source = 'cache';
-            return this.source;
-          }
-        }
-      } catch (e) { /* 快取壞了就用內建 */ }
-      this.source = 'bundled';
+      this.setUniversity(savedUni());
       return this.source;
     },
   };

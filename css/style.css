@@ -1,6 +1,11 @@
 /* ═══════════════════════════════════════════════════════
-   Eaty — 「新鮮白盒」設計系統 v0.5.8（動效強化版）
-   純白空間 × 墨黑有機色塊 × 大圓形俯拍美食攝影 × 茄紅點睛
+   Eaty — 「新鮮白盒」設計系統 v2.1.0（多校版）
+   純白空間 × 墨黑有機色塊 × 大圓形俯拍美食攝影 × 校色點睛
+
+   多校版本的三條規則
+   ├ 品牌紅只管「動作」（按鈕、focus、選取），校色只管「身份」（頁首帶、徽章、卡片邊）；
+   ├ 校色永遠不壓在文字上做小字底色 —— 它的明度只夠撐白字與色塊；
+   └ 切換大學時 --uni 換值，所有吃校色的元件一起过渡，不做整頁重繪。
 
    動效設計原則
    ├ 只用 transform / opacity / clip-path 做動畫（不觸發 layout）
@@ -11,14 +16,18 @@
    ═══════════════════════════════════════════════════════ */
 
 :root{
+  /* 紙張與墨：只有一層白紙 ＋ 兩層暖灰。灰階拉深是為了讓 12.5px 的說明字
+     在白底上真的到得了 4.5:1（舊值 #767470 只有 4.66，長文很虛）。 */
   --bg:#FFFFFF;
-  --soft:#F6F5F1;
-  --tile:#F1EFEA;
+  --paper:#FBFAF6;
+  --soft:#F5F3ED;
+  --tile:#EFEDE6;
   --ink:#141414;
   --ink-soft:#33322F;
-  --text-2:#5C5B56;
-  --meta:#767470;
-  --line:#EBEAE5;
+  --text-2:#514F49;
+  --meta:#6E6C66;
+  --line:#E4E2DA;
+  --line-soft:#EEEDE6;
   --line-dark:rgba(255,255,255,.14);
   --red:#CE2F1F;
   --red-deep:#A82718;
@@ -27,6 +36,36 @@
   --green:#3E9B4F;
   --green-deep:#2E7D42;
   --gold:#E8A013;
+
+  /* ── 校色：四校的識別色 ──────────────────────────
+     挑色標準不只是「像不像官方色」，而是：
+     ① 四色並置要一眼分得開 → 紅／磚金／藍／綠四個色相，彼此不鄰近；
+     ② 明度要接近 → 白字壓上去都 ≥5.8:1，不會有一校看起來特別輕；
+     ③ 要能當大面積色塊（大學頁頁首帶）而不刺眼。
+     CityU 官方紅本來就深，跟品牌紅 #CE2F1F 拉開成酒紅才分得出來；
+     PolyU 官方也是紅，改用它紅磚校園的磚金色才不會兩校撞色。
+     --uni / --uni-tint 由 app.js 依「目前大學」注入，未指定時退回品牌紅。 */
+  --uni-cityu:#A81E32;
+  --uni-polyu:#8C5A1B;
+  --uni-hkbu:#23507F;
+  --uni-hku:#1C6A4E;
+  --uni-cityu-tint:rgba(168,30,50,.075);
+  --uni-polyu-tint:rgba(140,90,27,.085);
+  --uni-hkbu-tint:rgba(35,80,127,.075);
+  --uni-hku-tint:rgba(28,106,78,.075);
+  --uni:#CE2F1F;
+  --uni-tint:rgba(206,47,31,.075);
+  /* 食堂識別色：資料裡 canteens[].color 會用到 ac1–ac8（markup 仍會掛上 canteen-acN
+     的 class）。目前只用於保留配色語意 —— 2026-10-23 起圓點標記已從 markup 移除，
+     若日後要做「食堂色標」可以直接拿這幾隻變數用。 */
+  --ac1:#CE2F1F;
+  --ac2:#E8A013;
+  --ac3:#3E9B4F;
+  --ac4:#33689B;
+  --ac5:#8A6BB8;
+  --ac6:#B67E0F;
+  --ac7:#2E7D42;
+  --ac8:#A0522D;
   --r-card:24px;
   --r-modal:28px;
   --r-tile:16px;
@@ -40,7 +79,8 @@
   --ease:cubic-bezier(.16,1,.3,1);           /* 主緩動：快出慢入 */
   --ease-out:cubic-bezier(.22,.68,0,1);      /* 位移進場（decelerate） */
   --ease-in:cubic-bezier(.55,.06,.68,.19);   /* 退場（accelerate） */
-  --ease-back:cubic-bezier(.34,1.42,.64,1);  /* 彈性落定（微過衝） */
+  --ease-settle:cubic-bezier(.22,1,.36,1);   /* 落定：quint 級 ease-out。原為 1.42 的回彈曲線，
+                                                真實物件是減速不是彈跳，已改掉 */
   --dur-1:120ms;   /* 即時回饋：hover / active */
   --dur-2:220ms;   /* 小元件狀態：chip、輸入框、退場 */
   --dur-3:340ms;   /* 進場：卡片、區塊、清單項 */
@@ -94,7 +134,7 @@ main:focus{outline:none}
   font:700 15px/1 var(--disp);padding:16px 28px;min-height:52px;white-space:nowrap;
   transition:transform var(--dur-3) var(--ease),box-shadow var(--dur-3) var(--ease),background var(--dur-2) var(--ease),border-color var(--dur-2) var(--ease);
 }
-.btn .icn{transition:transform var(--dur-3) var(--ease-back)}
+.btn .icn{transition:transform var(--dur-3) var(--ease-settle)}
 .btn-ink{background:var(--red);color:#fff;box-shadow:0 16px 30px -14px rgba(20,20,20,.5)}
 .btn-ink::after{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
@@ -137,15 +177,14 @@ button.chip.chip-on:hover{background:var(--red-deep)}
 button.chip:active{transform:scale(.94)}
 .chip-on{background:var(--red);color:#fff}
 .chip-on i{color:rgba(255,255,255,.65)}
-.chip.is-pop{animation:chipPop var(--dur-3) var(--ease-back)}
-/* ⚠️ 2026-10-14 移除一組「食堂色點」的殘骸：
-   原本這裡有 .dot-ac1／.canteen-ac1 .dot／.canteen-ac1{--dot} 等 9 條規則，
-   但 --ac1／--ac2／--ac3 這個 fork 從頭到尾沒有定義過（全 repo 搜不到 `--ac1:`），
-   所以 background:var(--ac1) 一律解析成「透明」—— 也就是說 chip 裡那顆 <i class="dot">
-   是「看不見、卻仍佔 8px 寬 + 7px flex gap」的空位，把標籤整體往右推 15px，
-   看起來就像文字沒有置中（食堂頁標題膠囊實測：左 28px／右 13px）。
-   現在 markup 裡的 <i class="dot"> 已全部拿掉，膠囊文字回到真正置中。
-   .dot 這條留著：圖示裡的骰子（dice）用 class="dot" 標記四個點數。 */
+.chip.is-pop{animation:chipPop var(--dur-3) var(--ease-settle)}
+/* ⚠️ 2026-10-23 移除一組「食堂色點」的殘骸（與單校版 2026-10-14 同一處理）：
+   原本這裡有 .canteen-ac1 .dot／.canteen-ac1{--dot} 等 20 條規則，配合 markup 裡的
+   <i class="dot">。但食堂標題膠囊用的是 `canteen-band-ac1`（不是 `canteen-ac1`），
+   圓點在那裡本來就沒有顏色 —— 變成「看不見、卻仍佔 8px 寬 + 7px gap」的空位，
+   把標籤文字往右推，看起來像沒有置中。現在 markup 的色點已全部拿掉
+   （卡片小字改由 canteenAltName() 決定），這批規則連同 --ac1…--ac8 一併清掉。
+   .dot 這條留著：骰子圖示用 class="dot" 標記四個點數，fill:currentColor 才會有實心點。 */
 .dot{width:8px;height:8px;border-radius:50%;flex:none;fill:currentColor}
 
 .badge{display:inline-flex;align-items:center;border-radius:999px;font:700 12px/1 var(--sans);padding:6px 12px;letter-spacing:.04em;white-space:nowrap}
@@ -189,7 +228,15 @@ button.chip:active{transform:scale(.94)}
 }
 .header-row{display:flex;align-items:center;gap:34px;height:var(--header-h)}
 .masthead{font:800 22px/1 var(--disp);letter-spacing:-.02em;display:flex;align-items:baseline;transition:transform var(--dur-2) var(--ease)}
-.masthead i{font-style:normal;color:var(--red);transition:transform var(--dur-3) var(--ease-back);display:inline-block}
+.masthead i{font-style:normal;color:var(--red);transition:transform var(--dur-3) var(--ease-settle);display:inline-block}
+/* 你在哪間學校：頁首品牌旁一顆校色圓點。首頁（未選校）不顯示，
+   只有在 #/u/... 或 #/canteen/... 時才亮起，顏色隨大學過渡。 */
+.masthead-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--uni);margin-left:9px;align-self:center;
+  opacity:0;transform:scale(.35);
+  transition:opacity var(--dur-2) var(--ease),transform var(--dur-3) var(--ease-settle),background var(--dur-4) var(--ease);
+}
+html[data-uni] .masthead-dot{opacity:1;transform:scale(1)}
 .masthead:hover i{transform:scale(1.35) translateY(-1px)}
 .masthead:active{transform:scale(.97)}
 .header-nav{display:flex;gap:26px;margin-left:8px}
@@ -200,6 +247,9 @@ button.chip:active{transform:scale(.94)}
 }
 .header-link:hover{color:var(--ink)}
 .header-link:hover::after{transform:scaleX(1)}
+/* 這一頁沒有那個區塊（例：HKU 還沒有評論 → 沒有今日熱門與避雷榜）時，
+   導覽入口熄掉，避免按下去毫無反應。 */
+.header-link.is-off{opacity:.32;pointer-events:none}
 .header-actions{margin-left:auto;display:flex;align-items:center;gap:14px}
 /* 頁首動作鈕是一對：語言切換 + 「今天吃什麼」。
    兩顆必須同形同高，否則並排時一眼就看出歪 —— 原本語言鈕是 padding:10px 14px
@@ -225,32 +275,81 @@ button.chip:active{transform:scale(.94)}
 /* 跟語言鈕同一種按壓回饋，兩顆手感才會一致（語言鈕自己的 scale 在上面） */
 .header-actions .btn:active:not([disabled]){transform:translateY(0) scale(.94)}
 
+/* ── 大學切換器（多大學版本）─────────────────────
+   放在 header-row 內、品牌名之後；桌機的 nav 藏起來時它要留下，
+   所以不依附 nav。做成小膠囊分段控制，選中那顆填墨黑。 */
+.uni-switch{
+  position:relative;display:flex;align-items:center;gap:3px;padding:4px;border-radius:999px;
+  background:var(--tile);flex:none;
+}
+/* 滑動指示器（v2.1.0）：墨黑膠囊鋪在按鈕底下，切換大學時整塊滑過去。
+   位置與寬度由 app.js 的 moveUniThumb() 量測按鈕座標後寫入，
+   所以只改 CSS 不會動——這裡負責「怎麼動」，JS 負責「動到哪」。
+   原本是「選中那顆自己變黑」，切換時兩顆同時換色，看不出方向感。 */
+.uni-thumb{
+  position:absolute;left:0;top:4px;height:calc(100% - 8px);width:0;border-radius:999px;
+  background:var(--ink);opacity:0;pointer-events:none;z-index:0;
+  box-shadow:0 8px 16px -10px rgba(20,20,20,.55);
+  transition:transform 420ms var(--ease-settle),width 420ms var(--ease-settle),opacity 200ms var(--ease);
+  will-change:transform,width;
+}
+/* 剛重建／視窗改變時直接就位，不要自己播一段滑動 */
+.uni-thumb.is-jump{transition:none}
+.uni-btn{
+  position:relative;z-index:1;
+  border:0;background:transparent;cursor:pointer;border-radius:999px;
+  padding:7px 14px;font:700 12.5px/1 var(--disp);letter-spacing:.01em;color:var(--text-2);
+  -webkit-tap-highlight-color:transparent;
+  transition:color 240ms var(--ease),background 240ms var(--ease),opacity 120ms var(--ease);
+}
+.uni-btn:hover:not(.is-on){color:var(--ink);background:rgba(20,20,20,.05)}
+.uni-btn:active{opacity:.65}
+.uni-btn.is-on{color:#fff}
+.uni-btn.is-on:hover{color:#fff;background:transparent}
+
 /* ── hero ── */
 .hero{position:relative;overflow:hidden;min-height:640px;display:flex;align-items:center;background:var(--bg)}
 .hero-blob{position:absolute;top:-330px;right:-190px;width:1120px;height:1120px;pointer-events:none;transform-origin:72% 28%;animation:blobBreath 19s ease-in-out infinite}
+/* 校色跟著路由走：進到某間大學，hero 的大色塊就換成該校顏色（首頁維持品牌紅） */
+.hero-blob path{fill:var(--uni)}
 .hero-grid{position:relative;display:grid;grid-template-columns:minmax(0,560px) 1fr;align-items:center;width:100%;padding-top:24px}
 .hero-copy{padding:24px 0 72px}
-.kicker{font:600 12.5px/1.4 var(--disp);letter-spacing:.2em;text-transform:uppercase;color:var(--red-deep);display:flex;align-items:center;gap:10px}
-.kicker::before{content:"";width:22px;height:2px;background:var(--red);border-radius:2px;flex:none}
-/* 標題改成品牌鎖排（Eaty + 紅點），沿用頁首／頁尾同一寫法；字距收緊配合拉丁字母 */
-.hero-title{font:900 clamp(46px,5.2vw,76px)/1.1 var(--sans);letter-spacing:-.02em;margin:24px 0 0}
+/* 眉題（kicker）於 v1.4.0 移除：原本每個區塊都是「小眉題 ＋ 大標題 ＋ 副標」三層，
+   掃視時眼睛要跨三個層級。現在標題自己承重，副標只補一句話。勿再加回來。 */
+.hero-title{font:900 clamp(48px,5.6vw,84px)/1.02 var(--sans);letter-spacing:-.028em;margin:0}
 .hero-title i{font-style:normal;color:var(--red)}
-.hero-tagline{font:800 clamp(17px,1.6vw,23px)/1.3 var(--disp);letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin-top:18px}
+/* 副標是中英混排的句子，不是全大寫標籤 —— 拿掉大寫與 0.16em 字距，中文才不會被拉散 */
+.hero-tagline{font:700 clamp(16px,1.45vw,21px)/1.4 var(--sans);letter-spacing:.005em;color:var(--ink-soft);margin-top:20px;max-width:22em}
 /* .hero-sub 已移除（文案刪除）；.hero-note 因此上移，間距補回 22px 維持節奏 */
 .hero-note{font:500 12px/1.7 var(--sans);color:var(--meta);max-width:30em;margin-top:22px}
+/* 首頁那句「全站已收錄 N 間大學、N 間食堂、N 道菜」：數字比正文大一級、用墨黑，
+   掃一眼就抓到規模；其餘字仍然是小字說明，不跟標語搶。 */
+.hero-note--count{max-width:34em;line-height:1.9}
+.hero-note--count b{font:800 15px/1 var(--disp);color:var(--ink);margin:0 2px;letter-spacing:-.01em}
 .hero-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:30px}
+/* 舊的 .hero-stats（大學／食堂／菜品獨立一行）已於 v2.1.0 併進上面的說明句，
+   同一組數字寫兩次是重複，所以整段刪掉。 */
 
 .hero-art{position:relative;height:640px}
 .bowl{position:absolute;top:76px;right:36px;width:500px;height:500px;animation:driftUp 8s ease-in-out infinite}
 .bowl-img{display:block;width:100%;height:100%;border-radius:50%;overflow:hidden;box-shadow:var(--shadow-pop);cursor:pointer;transition:box-shadow var(--dur-4) var(--ease)}
 .bowl-img:hover{box-shadow:0 44px 90px -30px rgba(20,20,20,.42)}
 .bowl-img img{width:100%;height:100%;object-fit:cover;transform:scale(1.045);transform-origin:50% 58%;transition:transform var(--dur-5) var(--ease)}
-.bowl-img:hover img{transform:scale(1.085)}
+/* hero 的碗是可按鈕：回饋交給陰影加深，圖片本身不縮放（放大会让它看起来像貼紙在抖） */
 .bowl-img:active img{transform:scale(1.04);transition-duration:var(--dur-1)}
 .price-tag{position:absolute;left:-34px;bottom:52px;background:#fff;border-radius:999px;padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-pop)}
 .price-tag .p{font:800 20px/1 var(--disp);letter-spacing:-.01em}
 .price-tag .d{font:700 13px/1.35 var(--sans);text-align:left}
 .price-tag .d small{display:block;font:500 11px/1.4 var(--sans);color:var(--meta)}
+/* 「這碗飯是哪間食堂的」——原本是標題上方的眉題，現在縮成價格牌上緣的校色膠囊，
+   位置離照片更近，也不會在 hero 左側多開一個文字層級。 */
+.price-tag .pt-from{
+  position:absolute;left:18px;top:-10px;
+  background:var(--uni);color:#fff;border-radius:999px;padding:5px 9px;
+  font:700 9.5px/1 var(--sans);letter-spacing:.05em;white-space:nowrap;
+  box-shadow:0 8px 16px -8px rgba(20,20,20,.5);
+  transition:background var(--dur-4) var(--ease);
+}
 .hero-stamp{position:absolute;top:56px;right:-12px;background:#fff;color:var(--red-deep);border-radius:999px;padding:11px 18px;font:700 13.5px/1 var(--sans);letter-spacing:.14em;transform:rotate(4deg);box-shadow:0 14px 26px -12px rgba(20,20,20,.45)}
 .hero-stamp.stamp-ok{background:#fff;color:var(--text-2);border:1.5px solid #C9C7C0}
 .hero-stamp.stamp-avoid{background:var(--ink);color:#fff;border:none}
@@ -270,16 +369,17 @@ button.chip:active{transform:scale(.94)}
 /* hero 進場：只在首次載入觸發（由 app.js 加上 data-enter） */
 .hero[data-enter] .hero-blob{animation:blobIn 1100ms var(--ease-out) both}
 .hero[data-enter] .hero-copy > *{animation:riseIn var(--dur-5) var(--ease-out) both}
+/* 子節點順序（眉題已移除）：標題／tagline／note／stats／actions。
+   節奏 80 → 280 → 380 → 460 → 540ms；標題自己走 titleMask，不吃這裡的延遲。 */
 .hero[data-enter] .hero-copy > :nth-child(1){animation-delay:80ms}
-.hero[data-enter] .hero-copy > :nth-child(3){animation-delay:280ms}
-/* 子節點減一顆（.hero-sub 已移除）：現在是 kicker／標題／tagline／note／actions。
-   延遲重排為 80 / 140 / 280 / 380 / 480ms——原本 note 之後直接跳到 540ms 會留下 160ms 空窗。 */
-.hero[data-enter] .hero-copy > :nth-child(4){animation-delay:380ms}
-.hero[data-enter] .hero-copy > :nth-child(5){animation-delay:480ms}
+.hero[data-enter] .hero-copy > :nth-child(2){animation-delay:280ms}
+.hero[data-enter] .hero-copy > :nth-child(3){animation-delay:380ms}
+.hero[data-enter] .hero-copy > :nth-child(4){animation-delay:460ms}
+.hero[data-enter] .hero-copy > :nth-child(5){animation-delay:540ms}
 .hero[data-enter] .hero-title{animation:titleMask 900ms var(--ease-out) 140ms both}
 .hero[data-enter] .bowl{animation:bowlIn 1000ms var(--ease-out) 220ms both}
-.hero[data-enter] .price-tag{animation:popIn 560ms var(--ease-back) 660ms both}
-.hero[data-enter] .hero-stamp{animation:stampIn 620ms var(--ease-back) 800ms both}
+.hero[data-enter] .price-tag{animation:popIn 560ms var(--ease-settle) 660ms both}
+.hero[data-enter] .hero-stamp{animation:stampIn 620ms var(--ease-settle) 800ms both}
 .hero[data-enter] .garnish{animation:drift var(--fdur,7s) ease-in-out var(--fdelay,0s) infinite}
 .hero[data-enter] .sprk{animation:sparkle 3.4s ease-in-out var(--sdelay,0s) infinite}
 .hero[data-enter] .bowl-img img{animation:bowlPhotoIn 1400ms var(--ease-out) 300ms both}
@@ -288,22 +388,107 @@ button.chip:active{transform:scale(.94)}
 .section{padding:96px 0 88px}
 .section--soft{background:var(--soft)}
 .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:40px}
-.section-title{font:900 clamp(25px,2.3vw,34px)/1.22 var(--sans);letter-spacing:-.01em;margin-top:13px}
-.section-sub{color:var(--text-2);margin-top:10px;max-width:36em;font-size:14.5px}
+.section-head-copy{max-width:44em}
+.section-title{font:900 clamp(27px,2.5vw,38px)/1.16 var(--sans);letter-spacing:-.022em;margin:0;text-wrap:balance}
+.section-sub{color:var(--text-2);margin-top:12px;max-width:34em;font-size:14.5px;line-height:1.75}
 
 /* ── 飯堂卡 ── */
+/* ── 大學卡（首頁第一層：先選學校）── */
+.school-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:26px}
+.school-card{
+  position:relative;display:flex;flex-direction:column;
+  background:#fff;border:1.5px solid var(--line);border-radius:var(--r-card);overflow:hidden;
+  transition:transform var(--dur-3) var(--ease),box-shadow var(--dur-3) var(--ease),border-color var(--dur-2) var(--ease);
+}
+.school-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-card);border-color:#DCD9D1}
+.school-card:active{transform:translateY(-2px) scale(.988);transition-duration:var(--dur-1)}
+
+/* 照片區：16:9。圖片用 object-fit 填滿，hover 時緩慢放大 */
+.school-photo{position:relative;display:block;aspect-ratio:16/9;overflow:hidden;background:var(--dot,var(--red))}
+.school-img{display:block;width:100%;height:100%;object-fit:cover;transition:transform var(--dur-5) var(--ease);will-change:transform}
+/* 照片 hover 不再放大：卡片的回饋交給上浮與校色邊框，影像本身保持靜止。
+   放大圖片是「生成式介面」最常見的簽名動作，而且會讓校名與照片一起晃。 */
+/* 深色漸層：底部夠深才壓得住白字，中段幾乎透明讓照片透出來 */
+.school-veil{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to top,
+    rgba(14,11,9,.9) 0%, rgba(14,11,9,.46) 26%,
+    rgba(14,11,9,.02) 52%, rgba(14,11,9,.16) 100%);
+}
+.school-tags{position:absolute;top:14px;left:16px;right:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.school-short{
+  font:800 11.5px/1 var(--disp);letter-spacing:.09em;text-transform:uppercase;color:#fff;
+  background:var(--dot,var(--red));padding:7px 11px;border-radius:999px;
+  box-shadow:0 2px 10px rgba(0,0,0,.22);
+}
+.school-test{
+  font:600 10.5px/1 var(--sans);letter-spacing:.04em;color:#fff;
+  background:rgba(255,255,255,.16);border:1px dashed rgba(255,255,255,.6);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  padding:6px 9px;border-radius:999px;
+}
+.school-name{position:absolute;left:22px;right:22px;bottom:15px;display:flex;flex-direction:column;gap:5px}
+.school-name b{
+  font:900 clamp(21px,1.85vw,27px)/1.2 var(--sans);letter-spacing:-.01em;color:#fff;
+  text-shadow:0 2px 14px rgba(0,0,0,.45);
+}
+.school-name span{
+  font:500 12.5px/1.35 var(--sans);color:rgba(255,255,255,.8);letter-spacing:.01em;
+  text-shadow:0 1px 8px rgba(0,0,0,.45);
+}
+
+/* 白底資訊帶 */
+.school-body{padding:18px 22px 19px;display:flex;flex-direction:column;gap:13px;flex:1}
+.school-tagline{font:700 12px/1.5 var(--disp);letter-spacing:.1em;text-transform:uppercase;color:var(--red-deep)}
+.school-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:auto;padding-top:14px;border-top:1.5px solid var(--line)}
+.school-stats{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.school-stat{font:500 12.5px/1.2 var(--sans);color:var(--text-2);white-space:nowrap}
+.school-stat b{font:900 16px/1 var(--sans);letter-spacing:-.01em;color:var(--ink);margin-right:4px}
+.school-go{display:inline-flex;align-items:center;gap:6px;font:700 13px/1 var(--disp);color:var(--ink);white-space:nowrap}
+.school-go .icn{transition:transform var(--dur-3) var(--ease)}
+.school-card:hover .school-go .icn{transform:translateX(5px)}
+
+/* 沒有照片時的後備：校色漸層 ＋ 巨大幽靈短名（不會出現破圖）。
+   校色可能很淺（HKBU 的綠），所以遮罩要比照片版更重，白字才壓得住。 */
+.school-card--nophoto .school-photo{background:linear-gradient(135deg,var(--dot,var(--red)) 0%,#17130F 78%)}
+.school-card--nophoto .school-veil{
+  background:linear-gradient(to top,
+    rgba(10,8,7,.94) 0%, rgba(10,8,7,.72) 38%, rgba(10,8,7,.5) 70%, rgba(10,8,7,.42) 100%);
+}
+.school-ghost{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font:900 clamp(44px,5.6vw,72px)/1 var(--disp);letter-spacing:-.02em;
+  color:rgba(255,255,255,.14);white-space:nowrap;
+}
+
 .canteen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+/* 卡片外面多一層 .canteen-cell：卡片本身是 <a>，「官方網上點餐」是另一個 <a>，
+   <a> 不能包 <a>，所以兩者只能是兄弟 —— 用這層直向容器把它們疊在一起，
+   再靠 .canteen-card{flex:1} 讓兩張卡在同一列等高。 */
 .canteen-cell{display:flex;flex-direction:column;min-width:0}
 .canteen-card{
   background:#fff;border:1.5px solid var(--line);border-radius:var(--r-card);overflow:hidden;display:flex;flex-direction:column;
   flex:1;min-width:0;
   transition:transform var(--dur-3) var(--ease),box-shadow var(--dur-3) var(--ease),border-color var(--dur-2) var(--ease);
 }
-.canteen-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-card);border-color:#DCD9D1;will-change:transform}
+/* hover 時邊框換成該校校色：卡片本身不寫死顏色，靠 :root 的 --uni 繼承，
+   所以同一張卡在 CityU 頁是酒紅、在 HKU 頁是墨綠，不必為每校複製一份樣式。 */
+.canteen-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-card);border-color:var(--uni);will-change:transform}
 .canteen-card:active{transform:translateY(-2px) scale(.988);transition-duration:var(--dur-1)}
 .canteen-card figure{aspect-ratio:16/10;overflow:hidden}
 .canteen-card figure img{width:100%;height:100%;object-fit:cover;transition:transform var(--dur-5) var(--ease)}
-.canteen-card:hover figure img{transform:scale(1.055)}
+/* 沒有場地照的食堂（目前是 5380 Cafe）：校色淡底 ＋ 幽靈短名。
+   刻意做成「設計過的留白」，而不是破圖或拿一張不相關的食物照充數。 */
+.canteen-card-noimg{
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--uni-tint),var(--soft) 58%,var(--tile));
+  border-bottom:1px solid var(--line-soft);
+}
+.canteen-card-noimg span{
+  font:800 46px/1 var(--disp);letter-spacing:-.02em;color:var(--uni);
+  opacity:.28;user-select:none;
+}
+/* 同上：食堂卡 hover 只上浮＋校色邊框，照片不縮放 */
 .canteen-card-body{padding:22px 24px 24px;display:flex;flex-direction:column;gap:11px;flex:1}
 /* 英文版建築名很長（3/F, Li Dak Sum Yip Yio Chin Academic Building），
    全域 .chip 的 nowrap 會令它溢出卡片——這裡准許換行，文字靠左對齊。 */
@@ -319,6 +504,11 @@ button.chip:active{transform:scale(.94)}
 .canteen-card-foot .n{font:700 12.5px/1.4 var(--disp);color:var(--ink)}
 .canteen-card-foot .n b{font-size:16px}
 .canteen-card-foot .go{font:700 13px/1 var(--disp);display:inline-flex;align-items:center;gap:6px;color:var(--red-deep)}
+.canteen-card-foot .go .icn{transition:transform var(--dur-3) var(--ease)}
+.canteen-card:hover .canteen-card-foot .go .icn{transform:translateX(5px)}
+.canteen-card-foot .go:hover{text-decoration:underline}
+/* 食堂卡的「官方網上點餐」：卡片本身是 <a>（進食堂頁），點餐是另一個 <a>，
+   所以放在 .canteen-cell 裡、卡片下面，做成一顆獨立膠囊。 */
 .canteen-card-order{
   display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;
   padding:10px 14px;border:1.5px solid var(--line);border-radius:999px;
@@ -328,9 +518,6 @@ button.chip:active{transform:scale(.94)}
 .canteen-card-order .icn{transition:transform var(--dur-3) var(--ease)}
 .canteen-card-order:hover{border-color:var(--red-deep);background:var(--red-deep);color:#fff}
 .canteen-card-order:hover .icn{transform:translate(2px,-2px)}
-.canteen-card-foot .go .icn{transition:transform var(--dur-3) var(--ease)}
-.canteen-card:hover .canteen-card-foot .go .icn{transform:translateX(5px)}
-.canteen-card-foot .go:hover{text-decoration:underline}
 
 /* ── 菜品卡 ── */
 .h-scroll{display:grid;grid-auto-flow:column;grid-auto-columns:296px;gap:22px;overflow-x:auto;padding:6px 6px 24px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#C9C7C0 transparent}
@@ -368,18 +555,17 @@ button.chip:active{transform:scale(.94)}
 .dish-ph-cat{font:600 10px/1 var(--disp);letter-spacing:.16em;text-transform:uppercase;color:#B9B6AD}
 
 /* ── 判定印章（膠囊化）── */
-.stamp{display:inline-flex;align-items:center;border-radius:999px;font:700 12px/1 var(--sans);padding:6px 12px;letter-spacing:.04em;white-space:nowrap;animation:stampPop var(--dur-4) var(--ease-back) both}
+.stamp{display:inline-flex;align-items:center;border-radius:999px;font:700 12px/1 var(--sans);padding:6px 12px;letter-spacing:.04em;white-space:nowrap;animation:stampPop var(--dur-4) var(--ease-settle) both}
 .stamp-must{background:var(--red);color:#fff}
 .stamp-ok{border:1.5px solid #C9C7C0;color:var(--text-2)}
 .stamp-avoid{background:var(--ink);color:#fff}
 
 /* ── 避雷排行榜（墨黑面板）── */
 .avoid-panel{background:var(--red-deep);border-radius:32px;padding:56px;display:grid;grid-template-columns:1fr 1.35fr;gap:56px;color:#fff;box-shadow:var(--shadow-pop)}
-.avoid-panel .kicker{color:var(--red-onink)}
-.avoid-panel .kicker::before{background:var(--red-onink)}
+/* 避雷面板：眉題已移除，標題直接壓在深色底上 */
 .avoid-panel .section-title{color:#fff}
 .avoid-panel .section-sub{color:rgba(255,255,255,.72)}
-.avoid-note{margin-top:22px;font:500 12px/1.7 var(--sans);color:rgba(255,255,255,.55);border-left:1px solid rgba(255,255,255,.24);padding-left:14px;max-width:26em}
+.avoid-note{margin-top:26px;font:500 12.5px/1.75 var(--sans);color:rgba(255,255,255,.58);border-left:1px solid rgba(255,255,255,.24);padding-left:16px;max-width:31em}
 .avoid-list{display:flex;flex-direction:column}
 /* 逐列滑入：只在面板真的進入視口後才播（.in 由 IntersectionObserver 加上） */
 .avoid-panel.in .avoid-row{animation:riseIn var(--dur-4) var(--ease-out) both;animation-delay:calc(140ms + var(--i,0) * 60ms)}
@@ -387,7 +573,7 @@ button.chip:active{transform:scale(.94)}
 .avoid-row:first-child{padding-top:2px}
 .avoid-row:last-child{border-bottom:none;padding-bottom:2px}
 .avoid-rank{font:800 28px/1 var(--disp);color:var(--red-onink);width:42px;flex:none;display:inline-block}
-.avoid-panel.in .avoid-rank{animation:rankIn var(--dur-4) var(--ease-back) both;animation-delay:calc(140ms + var(--i,0) * 60ms)}
+.avoid-panel.in .avoid-rank{animation:rankIn var(--dur-4) var(--ease-settle) both;animation-delay:calc(140ms + var(--i,0) * 60ms)}
 .avoid-dish{text-align:left;min-width:0;flex:1;padding:0;transition:transform var(--dur-2) var(--ease)}
 .avoid-dish:active{transform:scale(.985)}
 .avoid-dish-name{display:block;font:700 16px/1.35 var(--sans);color:#fff}
@@ -397,6 +583,8 @@ button.chip:active{transform:scale(.94)}
 .avoid-votes{margin-left:auto;text-align:right;flex:none}
 .avoid-votes b{font:800 18px/1 var(--disp);color:var(--red-onink);display:block}
 .avoid-votes i{font-style:normal;display:block;font:500 11px/1.4 var(--sans);color:rgba(255,255,255,.5);margin-top:4px}
+/* 百分比下面補一顆小膠囊寫「N 則評論」：只看 100% 看不出樣本有多大，
+   3 票全投避雷跟 30 票全投避雷是兩件完全不同的事。 */
 .avoid-votes em{font-style:normal;display:inline-block;margin-top:7px;font:700 10.5px/1 var(--sans);letter-spacing:.01em;color:rgba(255,255,255,.78);background:rgba(255,255,255,.13);padding:4px 9px;border-radius:999px}
 
 /* ── 評論牆 ── */
@@ -425,7 +613,7 @@ button.chip:active{transform:scale(.94)}
 .footer-brand{font:800 30px/1 var(--disp);letter-spacing:-.02em}
 .footer-brand i{font-style:normal;color:var(--red-onink)}
 .footer-note{color:rgba(255,255,255,.62);margin-top:14px;font-size:12.5px;max-width:34em;line-height:1.8}
-/* 免責聲明：略提高對比、加左側細線，與上方的說明段落區隔開 */
+/* 免責聲明（菜單非全部菜品）：略提高對比、加左側細線，與上方的說明段落區隔開 */
 .footer-note-strong{color:rgba(255,255,255,.8);font-size:12px;padding-left:11px;border-left:2px solid rgba(255,255,255,.26)}
 .footer-links{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
 .footer-links a,.footer-links .linklike{font:600 13px/1.5 var(--sans);color:rgba(255,255,255,.85);border:none;display:inline-flex;align-items:center;gap:7px}
@@ -443,11 +631,13 @@ button.chip:active{transform:scale(.94)}
 .crumb a:hover{color:var(--ink)}
 .crumb a .icn{transition:transform var(--dur-3) var(--ease)}
 .crumb a:hover .icn{transform:translateX(-3px)}
+/* 麵包屑裡的校名用校色，和頁首圓點、食堂卡 hover 邊一起構成「你在哪間學校」的線索 */
+.crumb-uni{color:var(--uni);transition:color var(--dur-4) var(--ease)}
 .canteen-band{padding-bottom:40px;border-bottom:1.5px solid var(--line)}
 .canteen-band-grid{display:grid;grid-template-columns:380px 1fr;gap:44px;align-items:center}
 .canteen-band-photo{position:relative;border-radius:var(--r-card);overflow:hidden;aspect-ratio:4/3;box-shadow:var(--shadow-card);animation:bandPhotoIn 760ms var(--ease-out) both}
 .canteen-band-photo img{width:100%;height:100%;object-fit:cover;transition:transform var(--dur-5) var(--ease)}
-.canteen-band-photo:hover img{transform:scale(1.04)}
+/* 食堂頁大圖不是可點元素，hover 縮放只是無功能的裝飾，已移除 */
 .canteen-band-copy > *{animation:riseIn var(--dur-4) var(--ease-out) both}
 .canteen-band-copy > :nth-child(1){animation-delay:80ms}
 .canteen-band-copy > :nth-child(2){animation-delay:140ms}
@@ -463,7 +653,7 @@ button.chip:active{transform:scale(.94)}
 .order-link .icn{transition:transform var(--dur-3) var(--ease)}
 .order-link:hover{text-decoration:underline}
 .order-link:hover .icn{transform:translate(2px,-2px)}
-/* 食堂本身沒有點餐站、但底下檔口有（AC2：西北麵館／餃餃陣）時，
+/* 食堂本身沒有點餐站、但底下檔口有（例：AC2 的西北麵館／餃餃陣、HKBU 的檔口）時，
    在標題區（時段行與統計列之間）列一排「檔口名 ↗」。
    膠囊沿用 .cat-head-order，讓「網上點餐」在標題區與分類標題列長得一模一樣。 */
 .canteen-order-stalls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -516,7 +706,7 @@ button.chip:active{transform:scale(.94)}
 .meal-tab::after{
   content:"";position:absolute;left:15px;right:15px;bottom:-1.5px;height:2.5px;border-radius:2px;
   background:var(--red);transform:scaleX(0);
-  transition:transform var(--dur-3) var(--ease-back);
+  transition:transform var(--dur-3) var(--ease-settle);
 }
 .meal-tab:first-child{padding-left:0}
 .meal-tab:first-child::after{left:0}
@@ -524,15 +714,15 @@ button.chip:active{transform:scale(.94)}
 .meal-tab.is-on{color:var(--ink)}
 .meal-tab.is-on::after{transform:scaleX(1)}
 .meal-tab:active{transform:scale(.96)}
-.meal-tab.is-pop{animation:chipPop var(--dur-3) var(--ease-back)}
+.meal-tab.is-pop{animation:chipPop var(--dur-3) var(--ease-settle)}
 
 /* 分類組 */
 .cat-group{margin-bottom:44px}
 .cat-head{display:flex;align-items:baseline;gap:10px;font:900 20px/1.3 var(--sans);margin-bottom:18px}
 .cat-head-en{font:600 11px/1 var(--disp);letter-spacing:.14em;color:var(--meta);text-transform:uppercase}
 .cat-head i{font-style:normal;font:600 11px/1 var(--disp);color:var(--meta);margin-left:auto}
-/* 檔口（＝分類）的官方點餐連結：AC2 部分檔口有自己的點餐店（categories.order_url）。
-   掛在分類標題列時做成小膠囊；「只看這個分類」時沒有標題列，改用 .cat-order-bar 橫幅。 */
+/* 檔口（＝分類）的官方點餐連結：分類本身有自己的點餐店時（categories.orderUrl），
+   在分類標題列多一顆小膠囊；「只看這個分類」時沒有標題列，改用 .cat-order-bar 橫幅。 */
 .cat-head-order{display:inline-flex;align-items:center;gap:5px;align-self:center;white-space:nowrap;
   font:700 11px/1 var(--disp);letter-spacing:.06em;color:var(--red-deep);
   border:1px solid rgba(168,39,24,.3);border-radius:999px;padding:6px 11px;
@@ -582,7 +772,7 @@ button.chip:active{transform:scale(.94)}
   /* 44×44 是可點擊目標的下限（原本 40×40 差 4px）——這顆在手機上要單手按得到 */
   position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;
   display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-card);z-index:5;color:var(--ink);
-  transition:color var(--dur-2) var(--ease),transform var(--dur-3) var(--ease-back);
+  transition:color var(--dur-2) var(--ease),transform var(--dur-3) var(--ease-settle);
 }
 .modal-close:hover{color:var(--red-deep);transform:rotate(90deg)}
 .modal-close:active{transform:rotate(90deg) scale(.9);transition-duration:var(--dur-1)}
@@ -612,13 +802,13 @@ button.chip:active{transform:scale(.94)}
   background:rgba(255,255,255,.93);
   -webkit-backdrop-filter:blur(10px) saturate(1.2);backdrop-filter:blur(10px) saturate(1.2);
   box-shadow:0 12px 28px -14px rgba(20,20,20,.5);
-  animation:popIn 520ms var(--ease-back) 420ms both;
+  animation:popIn 520ms var(--ease-settle) 420ms both;
 }
 /* 白色描邊圈讓紅色印章在雜亂的食物照上不會糊在一起 */
 .dish-modal-photo .stamp{
   position:absolute;top:16px;left:16px;z-index:2;
   box-shadow:0 0 0 3px rgba(255,255,255,.5),0 10px 24px -14px rgba(20,20,20,.55);
-  animation:stampIn 560ms var(--ease-back) 480ms both;
+  animation:stampIn 560ms var(--ease-settle) 480ms both;
 }
 .dish-modal-info{padding:38px 40px 30px;display:flex;flex-direction:column;gap:14px}
 .dish-modal-canteen{align-self:flex-start}
@@ -649,7 +839,7 @@ button.chip:active{transform:scale(.94)}
 }
 .dist-bar.avoid-bar span{background:var(--ink)}
 .verdict-sum{display:flex;gap:9px}
-.v-pill{flex:1;border-radius:14px;padding:11px 12px;text-align:center;animation:popIn 560ms var(--ease-back) both}
+.v-pill{flex:1;border-radius:14px;padding:11px 12px;text-align:center;animation:popIn 560ms var(--ease-settle) both}
 .v-pill:nth-child(1){animation-delay:440ms}
 .v-pill:nth-child(2){animation-delay:500ms}
 .v-pill:nth-child(3){animation-delay:560ms}
@@ -676,6 +866,7 @@ button.chip:active{transform:scale(.94)}
 .review-date{font:500 11.5px/1 var(--sans);color:var(--meta);margin-left:auto}
 .review-stars{display:flex;align-items:center;gap:9px}
 .review-text{font-size:13.5px;color:var(--ink-soft);line-height:1.7}
+/* 只給了星級、沒留言的評論：用斜體灰字說明，而不是留一條空白 */
 .review-text--empty{color:var(--meta);font-style:italic}
 
 /* 一鍵評分：不用打字就能投一票，放在評分摘要與評論列表之間 */
@@ -696,7 +887,24 @@ button.chip:active{transform:scale(.94)}
 .quick-btn-ok:hover{background:var(--ink);border-color:var(--ink);color:#fff}
 .quick-btn-avoid{border-color:rgba(140,43,30,.3);color:#8C2B1E}
 .quick-btn-avoid:hover{background:#8C2B1E;border-color:#8C2B1E;color:#fff}
-.quick-btn.is-pop{animation:chipPop 380ms var(--ease-back)}
+.quick-btn.is-pop{animation:chipPop 380ms var(--ease-settle)}
+/* 兩步提交：第一步只標記「已選」，第二步按「確認送出」才寫入 */
+.quick-btn.is-picked{background:var(--ink);border-color:var(--ink);color:#fff;transform:translateY(-2px);box-shadow:0 0 0 2px rgba(255,255,255,.9) inset,0 12px 24px -16px rgba(20,20,20,.75)}
+.quick-btn.is-picked span{opacity:.85}
+.quick-btn-must.is-picked{background:var(--red);border-color:var(--red);color:#fff}
+.quick-btn-avoid.is-picked{background:#8C2B1E;border-color:#8C2B1E;color:#fff}
+.quick-confirm{flex:1 1 100%;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:2px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);animation:contentIn 320ms var(--ease-out) both}
+.quick-confirm[hidden]{display:none}
+.quick-confirm-msg{flex:1 1 190px;min-width:0;font:700 13px/1.45 var(--sans);color:var(--ink)}
+.quick-confirm-actions{display:flex;gap:8px;flex:none}
+.quick-yes,.quick-no{min-height:40px;padding:0 18px;border-radius:999px;border:1.5px solid transparent;font:800 13px/1 var(--sans);transition:background var(--dur-2) var(--ease),border-color var(--dur-2) var(--ease),color var(--dur-2) var(--ease),transform var(--dur-1) var(--ease)}
+.quick-yes{background:var(--ink);color:#fff}
+.quick-yes:hover{background:#000}
+.quick-yes:active{transform:scale(.97)}
+.quick-yes[disabled]{opacity:.6;cursor:progress}
+.quick-no{background:#fff;color:var(--text-2);border-color:var(--line)}
+.quick-no:hover{border-color:var(--ink);color:var(--ink)}
+.quick-no:active{transform:scale(.97)}
 
 /* 預設標籤：點了以 #標籤 形式插進食後感 */
 .tag-field{margin:0}
@@ -706,7 +914,7 @@ button.chip:active{transform:scale(.94)}
 .tag-pick:hover{background:#fff;border-color:var(--line);color:var(--ink)}
 .tag-pick.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .tag-pick:active{transform:scale(.96)}
-.tag-pick.is-pop{animation:chipPop 320ms var(--ease-back)}
+.tag-pick.is-pop{animation:chipPop 320ms var(--ease-settle)}
 .review-empty{color:var(--meta);border:none}
 
 /* 評論表單 */
@@ -714,19 +922,19 @@ button.chip:active{transform:scale(.94)}
 .form-sub{font-size:12.5px;color:var(--meta);margin-top:-8px}
 .star-field legend,.verdict-field legend,.nick-field span,.text-field span{display:block;font:700 12.5px/1 var(--sans);color:var(--ink-soft);margin-bottom:8px}
 .star-input{display:flex;gap:4px}
-.star-btn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;color:#DBD9D2;transition:color var(--dur-1) var(--ease),transform var(--dur-1) var(--ease-back),background var(--dur-2) var(--ease)}
+.star-btn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;color:#DBD9D2;transition:color var(--dur-1) var(--ease),transform var(--dur-1) var(--ease-settle),background var(--dur-2) var(--ease)}
 .star-btn .icn{width:25px;height:25px}
 .star-btn.on{color:var(--gold)}
 .star-btn:hover{transform:scale(1.12);background:var(--soft)}
 .star-btn:active{transform:scale(.88)}
-.star-btn.is-pop{animation:starPop 380ms var(--ease-back)}
+.star-btn.is-pop{animation:starPop 380ms var(--ease-settle)}
 .verdict-input{display:flex;background:var(--soft);border-radius:999px;padding:4px;gap:4px}
 .verdict-opt{flex:1;border-radius:999px;font:700 13px/1 var(--sans);padding:11px 4px;color:var(--text-2);min-height:44px;transition:background var(--dur-2) var(--ease),color var(--dur-2) var(--ease),box-shadow var(--dur-2) var(--ease),transform var(--dur-1) var(--ease)}
 .verdict-opt.on{background:var(--red);color:#fff;box-shadow:0 6px 14px -6px rgba(20,20,20,.35)}
 .verdict-opt-ok.on{background:var(--ink)}
 .verdict-opt-avoid.on{background:#8C2B1E}
 .verdict-opt:active{transform:scale(.96)}
-.verdict-opt.is-pop{animation:chipPop 380ms var(--ease-back)}
+.verdict-opt.is-pop{animation:chipPop 380ms var(--ease-settle)}
 .nick-field input,.text-field textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font:500 14px/1.5 var(--sans);color:var(--ink);background:#fff;caret-color:var(--red);transition:border-color var(--dur-2) var(--ease),box-shadow var(--dur-2) var(--ease)}
 .nick-field input::placeholder,.text-field textarea::placeholder{color:#A8A69E}
 .nick-field input:focus,.text-field textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 4px rgba(20,20,20,.05)}
@@ -734,7 +942,7 @@ button.chip:active{transform:scale(.94)}
 .form-error{font:600 12.5px/1.6 var(--sans);color:var(--red-deep)}
 .form-error.is-shake{animation:shake 320ms var(--ease)}
 .form-thanks{font:600 13px/1.6 var(--sans);color:var(--green-deep);background:rgba(62,155,79,.1);border-radius:12px;padding:11px 15px;margin-bottom:4px}
-.form-thanks.is-new{animation:thanksIn 620ms var(--ease-back) both}
+.form-thanks.is-new{animation:thanksIn 620ms var(--ease-settle) both}
 .form-foot{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .form-hint{font:500 11.5px/1.6 var(--sans);color:var(--meta)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -748,7 +956,7 @@ button.chip:active{transform:scale(.94)}
 .random-filter-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .random-filter-label{flex:none;font:700 11px/1 var(--disp);letter-spacing:.1em;color:var(--meta)}
 .random-scopes,.random-meals{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
-/* 這個範圍內該時段一道菜都沒有 → 禁用（例如 AC2 冇早餐）。禁用鈕不會觸發 click，天然擋掉。 */
+/* 這個範圍內該時段一道菜都沒有 → 禁用（例如 AC2 冇早餐、AC3 冇下午茶）。禁用鈕不會觸發 click，天然擋掉。 */
 .random-meals .chip:disabled{opacity:.3;cursor:not-allowed}
 .random-meals .chip:disabled:hover{background:var(--soft);color:var(--ink-soft)}
 .random-stage{
@@ -762,7 +970,7 @@ button.chip:active{transform:scale(.94)}
   background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);
   transform:translate3d(-120%,0,0);animation:sheen 1.15s linear infinite;
 }
-.random-stage.landed{background:var(--red-tint);animation:stageThump 420ms var(--ease-back)}
+.random-stage.landed{background:var(--red-tint);animation:stageThump 420ms var(--ease-settle)}
 .random-stage.landed::after{
   content:"";position:absolute;inset:0;border-radius:20px;border:2px solid var(--red);pointer-events:none;
   animation:ringPulse 760ms var(--ease-out) both;
@@ -770,8 +978,8 @@ button.chip:active{transform:scale(.94)}
 .random-dish{font:900 22px/1.35 var(--sans);min-height:34px}
 .random-flip{display:inline-block;will-change:transform}
 .random-stamp-slot .stamp{transform:rotate(-3deg)}
-.random-dish.landed .random-flip{animation:land 620ms var(--ease-back) both}
-.stamp-slam{animation:slam 520ms var(--ease-back) both}
+.random-dish.landed .random-flip{animation:land 620ms var(--ease-settle) both}
+.stamp-slam{animation:slam 520ms var(--ease-settle) both}
 .random-result-actions{display:flex;justify-content:center;margin-top:14px;animation:riseIn var(--dur-4) var(--ease-out) both}
 /* 可抽道數：黑名單一改，這裡的數字就跟著變 —— 是「黑名單有沒有吃到」最直接的證明 */
 .random-pool{font:600 12px/1 var(--disp);letter-spacing:.02em;color:var(--meta);margin:-9px 0 14px}
@@ -785,6 +993,28 @@ button.chip:active{transform:scale(.94)}
   opacity:1;transform:none;
   transition:opacity var(--dur-reveal) var(--ease) var(--rd,0ms),transform var(--dur-reveal) var(--ease) var(--rd,0ms);
 }
+
+/* ══ 路由轉場（View Transitions API）══════════════
+   舊畫面往上淡出（260ms，快），新畫面從下方淡入（420ms，慢）。
+   退場比進場快，視線不會停在兩張圖重疊的鬼影上。 */
+::view-transition-old(root){animation:vtOld 260ms var(--ease-in) both}
+::view-transition-new(root){animation:vtNew 420ms var(--ease-out) both}
+@keyframes vtOld{to{opacity:0;transform:translate3d(0,-10px,0)}}
+@keyframes vtNew{from{opacity:0;transform:translate3d(0,16px,0)}}
+
+/* ══ 大學卡：指標微傾斜 ═══════════════════════════
+   只給有指標的裝置（滑鼠／觸控筆），由 app.js 的 bindTilt() 掛 pointermove。
+   傾角壓在 5° 以內 —— 要的是「紙卡被手指按住」的手感，不是 3D 展示。 */
+.school-card{transform-style:preserve-3d}
+.school-card.is-tilting{
+  transition:transform 0ms,box-shadow var(--dur-3) var(--ease),border-color var(--dur-2) var(--ease);
+  will-change:transform;
+}
+
+/* ══ 大學卡照片：進場擦開 ═════════════════════════
+   reveal 加上 .in 時，照片從下緣往上擦開 9%，比單純淡入多一個方向感。 */
+.school-img{clip-path:inset(0 0 9% 0);transition:clip-path 980ms var(--ease-out),transform var(--dur-5) var(--ease)}
+.school-card.in .school-img{clip-path:inset(0 0 0 0)}
 
 /* ── 關鍵影格 ───────────────────────────── */
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -864,6 +1094,9 @@ button.chip:active{transform:scale(.94)}
   /* 手機不需要桌機的 72px：頁首內最高的元素是 44px 的按鈕，60px 仍有 8px 呼吸。
      省下來的 12px 正好補回篩選列改成兩行後增加的高度。 */
   :root{--header-h:60px}
+  /* 手機頁首放不下四顆大學切換鈕（390px 上會把語言／隨機鈕推出畫面 69px）。
+     首頁本身已經是「選大學」頁，所以手機收起切換器，改由首頁與麵包屑導航。 */
+  .uni-switch{display:none}
   .wrap{padding:0 22px}
   /* 篩選列改為兩行：分類 chip 獨佔整行，排序移到第二行右對齊。
      原本單行時 chip 只分到 192px 滑動區（23 顆裡 21 顆在畫面外），
@@ -886,9 +1119,17 @@ button.chip:active{transform:scale(.94)}
   /* 16px：iOS 對小於 16px 的表單控制會在聚焦時自動放大整個頁面 */
   .sort-box select{min-height:40px;padding:0 14px;font:700 16px/1 var(--disp)}
   .section{padding:64px 0 56px}
+  /* 大學卡在手機改成單欄：照片比桌面稍高（16:10），校名與資訊帶同步收窄內距 */
+  .school-grid{grid-template-columns:1fr;gap:18px}
+  .school-photo{aspect-ratio:16/10}
+  .school-name{left:18px;right:18px;bottom:13px}
+  .school-body{padding:16px 18px 17px}
   .section-head{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:28px}
   .hero{min-height:0;display:block;padding:8px 0 44px}
-  .hero-blob{width:560px;height:560px;top:auto;bottom:-70px;right:-300px}
+  /* 手機上色塊要退到碗的後面：原本 560px 高、bottom:-70px，
+     頂端剛好落在兩顆按鈕（紅色）上，紅壓紅令主按鈕的邊界消失、看起來像溢出。
+     現在縮小並下移，按鈕區保持白底，紅色只包住碗的下半部。 */
+  .hero-blob{width:420px;height:420px;top:auto;bottom:-150px;right:-150px}
   .hero-grid{display:block}
   .hero-copy{padding:12px 0 0}
   .hero-title{font-size:42px}
@@ -972,6 +1213,8 @@ button.chip:active{transform:scale(.94)}
     scroll-behavior:auto!important;
   }
   .reveal.reveal-armed{opacity:1;transform:none}
+  /* 不播擦開動畫時，照片一開始就該是完整的，不能停在裁掉 9% 的狀態 */
+  .school-img{clip-path:none}
   .hero-blob,.bowl,.garnish,.sprk{animation:none!important}
   .scroll-progress{display:none}
   ::view-transition-old(root),::view-transition-new(root){animation:none!important}

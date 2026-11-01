@@ -1,22 +1,20 @@
-/* 城大搵食指南 CityU Eats — 評論儲存層
+/* Eaty — 多大學版本 · 評論儲存層
  *
- * 兩個 Store 實作同一個介面：
- *   list()            → Promise<Array<review>>  所有評論（含範例）
+ * 兩個 Store 實作同一個介面（與單校版相同）：
+ *   list()            → Promise<Array<review>>  所有評論
  *   add(review)       → Promise<review>         新增一則
  *   remoteAvailable() → boolean
  *
  * review: { id, dishId, rating(1-5), verdict('must'|'ok'|'avoid'),
  *           nickname, text, created(ISO), sample? }
  *
- * 預設 LocalStore：每個瀏覽器自己的 localStorage，開箱即用。
- * 填好 config.js 的 Supabase 金鑰後自動切 SupabaseStore（全校共享）。
+ * v2.0.0 起預設走 Supabase（全校／跨校共享）；沒填金鑰或金鑰失效時
+ * 自動退回 localStorage，網站仍然可用，只是評論不外傳。
  */
 (function () {
   'use strict';
-  const CFG = window.CITYU_EATS_CONFIG;
-  const DATA = window.CITYU_EATS_DATA;
-
-  /* ── 共用工具 ─────────────────────────────── */
+  const CFG = window.EATY_CONFIG;
+  const DATA = window.EATY_DATA;
 
   function uid() {
     return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -28,7 +26,8 @@
 
   function sampleReviews() {
     if (samplesHidden()) return [];
-    return DATA.sampleReviews.map((r) => ({ ...r, sample: true }));
+    const list = Array.isArray(DATA.sampleReviews) ? DATA.sampleReviews : [];
+    return list.map((r) => ({ ...r, sample: true }));
   }
 
   function isValidReview(r) {
@@ -36,24 +35,25 @@
       r && DATA.dishes.some((d) => d.id === r.dishId) &&
       Number.isInteger(r.rating) && r.rating >= 1 && r.rating <= 5 &&
       ['must', 'ok', 'avoid'].includes(r.verdict) &&
-      // text 允許空字串：一鍵評分只投星級與判定，不強迫打字
+      // 食後感可以留空：一鍵評分（只按判定）與「只給星級」都算一票，
+      // 只要不超過 600 字就收。門檻壓到最低，留言率才上得去。
       typeof r.text === 'string' && r.text.trim().length <= 600
     );
   }
 
-  /* ── LocalStore（預設）─────────────────────── */
+  /* ── LocalStore（唯一的 Store）─────────────── */
 
   function LocalStore() {}
   LocalStore.prototype.remoteAvailable = function () { return false; };
   LocalStore.prototype._read = function () {
     try {
-      const raw = localStorage.getItem(CFG.STORAGE_KEY);
+      const raw = localStorage.getItem(CFG.REVIEWS_KEY);
       const parsed = raw ? JSON.parse(raw) : { v: 1, reviews: [] };
       return Array.isArray(parsed.reviews) ? parsed.reviews : [];
     } catch (e) { return []; }
   };
   LocalStore.prototype._write = function (reviews) {
-    localStorage.setItem(CFG.STORAGE_KEY, JSON.stringify({ v: 1, reviews }));
+    localStorage.setItem(CFG.REVIEWS_KEY, JSON.stringify({ v: 1, reviews }));
   };
   LocalStore.prototype.list = async function () {
     return sampleReviews().concat(this._read());
@@ -75,10 +75,10 @@
     return review;
   };
 
-  /* ── SupabaseStore（填金鑰後啟用）──────────── */
+  /* ── SupabaseStore（填了金鑰就啟用，全校／跨校共享）────── */
 
   function SupabaseStore(url, key) {
-    this.url = url.replace(/\/$/, '');
+    this.url = String(url).replace(/\/$/, '');
     this.key = key;
     this.table = CFG.SUPABASE_TABLE || 'reviews';
   }
@@ -92,7 +92,7 @@
   };
   SupabaseStore.prototype.list = async function () {
     const res = await fetch(
-      `${this.url}/rest/v1/${this.table}?select=*&order=created.desc&limit=500`,
+      `${this.url}/rest/v1/${this.table}?select=*&order=created.desc&limit=1000`,
       { headers: this._headers() }
     );
     if (!res.ok) throw new Error('supabase list failed: ' + res.status);
@@ -131,7 +131,7 @@
     };
   };
 
-  /* ── 選擇 Store ───────────────────────────── */
+  /* ── 選擇 Store：有金鑰走雲端，沒有就退回本地 ────────── */
 
   const useSupabase = CFG.SUPABASE_URL && CFG.SUPABASE_ANON_KEY;
   const store = useSupabase
@@ -153,14 +153,12 @@
       const verdictCount = { must: 0, ok: 0, avoid: 0 };
       const dist = [0, 0, 0, 0, 0];
       for (const r of rs) { verdictCount[r.verdict]++; dist[r.rating - 1]++; }
-      // 菜品判定 = 多數 verdict（平手 → 不顯示）
       let verdict = null;
       const max = Math.max(verdictCount.must, verdictCount.ok, verdictCount.avoid);
       if (max > 0) {
         const winners = ['must', 'ok', 'avoid'].filter((v) => verdictCount[v] === max);
         if (winners.length === 1) verdict = winners[0];
       }
-      // 避雷傾向：避雷票佔比
       stats[dishId] = {
         count, avg, dist, verdict,
         avoidRatio: count ? verdictCount.avoid / count : 0,
@@ -170,9 +168,12 @@
     return stats;
   }
 
-  window.CityuEatsReviews = { store, aggregate, samplesHidden, toggleSamples() {
-    const next = samplesHidden() ? '0' : '1';
-    localStorage.setItem(CFG.SAMPLES_KEY, next);
-    return !samplesHidden();
-  } };
+  window.EatyReviews = {
+    store, aggregate, samplesHidden,
+    toggleSamples() {
+      const next = samplesHidden() ? '0' : '1';
+      localStorage.setItem(CFG.SAMPLES_KEY, next);
+      return !samplesHidden();
+    },
+  };
 })();

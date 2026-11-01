@@ -1,5 +1,7 @@
-/* Eaty — 城大搵食指南：應用層（路由、畫面、評論、隨機器）
- * v0.5.0「新鮮白盒 · 動效強化」：渲染層對齊 design/eaty-v7.html 視覺稿。
+/* Eaty — 香港校園食堂指南（多大學版本）：應用層（路由、畫面、評論、隨機器）
+ * v1.1.0：把單校版（CityU 版 v0.14.1）已驗證的功能補回來 ——
+ *        一鍵評分、預設標籤、食後感可留空、檔口點餐、避雷榜評論數、頁尾說明；
+ *        同時保留多大學專屬的大學切換、茶餐段、跨校連結自動切校。
  *
  * 動效約定
  * ├ 進場由 CSS 關鍵影格驅動（宣告式、可被 prefers-reduced-motion 全域中和）；
@@ -9,9 +11,9 @@
  */
 (function () {
   'use strict';
-  const DATA = window.CITYU_EATS_DATA;
+  const DATA = window.EATY_DATA;
   const I18N = window.I18N;
-  const Reviews = window.CityuEatsReviews;
+  const Reviews = window.EatyReviews;
   const store = Reviews.store;
 
   /* 使用者偏好：減少動態（不預先快取 matches，讓系統設定切換即時生效） */
@@ -21,7 +23,7 @@
     reviews: [],
     stats: {},
     filters: {},          // canteenId → { cat, sort }
-    route: { view: 'home', canteenId: null },
+    route: { view: 'home', canteenId: null, uniId: null },
     modalReturnFocus: null,
   };
 
@@ -34,13 +36,40 @@
   const canteenById = (id) => DATA.canteens.find((c) => c.id === id);
   const catById = (id) => DATA.categories.find((c) => c.id === id) || { zh: id, en: id };
 
+  /* ── 大學維度 ─────────────────────────────
+   * 多大學版本：DATA.canteens / categories / dishes 是「目前大學的作用中檢視」，
+   * 由 EatyMenu.setUniversity() 就地替換。這裡只負責讀出目前大學的 metadata，
+   * 以及切換時把畫面帶回該校首頁。
+   */
+  const Menu = window.EatyMenu;
+  const universities = () => (Menu && Menu.universities) || [];
+  const currentUni = () => (Menu && Menu.university(Menu.currentUni)) || universities()[0] || null;
+  /** 這間食堂屬於哪間大學（給麵包屑用；資料永遠帶 uni，不怕當前檢視被換掉）。 */
+  const uniOfCanteen = (c) => universities().find((u) => u.id === (c && c.uni)) || null;
+
+  /** 切換目前大學，並帶到該校的食堂列表（第二層）。 */
+  function switchUniversity(id) {
+    if (!Menu || !universities().some((u) => u.id === id)) return;
+    if (Menu.currentUni !== id) {
+      Menu.setUniversity(id);
+      // 換了大學，原本那間食堂不屬於新學校 → 篩選狀態與 chip 捲動位置一併清掉
+      state.filters = {};
+      chipScopeKey = '';
+      chipScrollLeft = 0;
+    }
+    const target = `#/u/${id}`;
+    if (location.hash === target) render();      // 已在同一頁：直接重繪（語言切換會走這條）
+    else location.hash = target;                // 其他頁：交給 hashchange
+  }
+
   /* ── 餐段（meal）──────────────────────────
    * categories[].meal 已在 menu-data.js 解析成陣列（例如 ['lunch','dinner']）。
-   * 空陣列 ＝ 不分餐 —— 只在「全日」出現，早餐／午餐／晚餐都不算它。
+   * 空陣列 ＝ 不分餐 —— 只在「全日」出現，早餐／午餐／下午茶／晚餐都不算它。
    * （例：其他 → 環保餐盒，$1 一件，不是一餐的菜。）
+   * 多大學版本多一段「下午茶」：HKBU 多間食堂都有獨立茶餐時段。
    */
-  const MEALS = ['breakfast', 'lunch', 'dinner'];
-  const MEAL_KEY = { breakfast: 'mealBreakfast', lunch: 'mealLunch', dinner: 'mealDinner' };
+  const MEALS = ['breakfast', 'lunch', 'tea', 'dinner'];
+  const MEAL_KEY = { breakfast: 'mealBreakfast', lunch: 'mealLunch', tea: 'mealTea', dinner: 'mealDinner' };
   const catInMeal = (cat, meal) => !meal || (Array.isArray(cat.meal) && cat.meal.indexOf(meal) >= 0);
 
   function esc(s) {
@@ -65,9 +94,24 @@
   function canteenAltName(c) {
     if (c.alias) return c.alias;
     const zh = I18N.lang() === 'zh';
-    const main = String(zh ? c.zh : c.en || '').trim();
-    const alt = String(zh ? c.en || '' : c.zh).trim();
-    return alt.toLowerCase() === main.toLowerCase() ? c.short : alt;
+    const main = String((zh ? c.zh : c.en) || '').trim();
+    const alt = String((zh ? c.en : c.zh) || '').trim();
+    const sameAsMain = (v) => !v || v.toLowerCase() === main.toLowerCase();
+    if (!sameAsMain(alt)) return alt;      // ② 另一語言名稱不同 → 就用它
+    if (!sameAsMain(c.short)) return c.short;  // ③ 中英同名 → 退到短名
+    // ④ 連短名都等於全名（HKBU 的「Harmony Lounge」）→ 退到校園名，
+    //    否則又會出現「Harmony Lounge / Harmony Lounge」這種自我重複。
+    return String((zh ? c.campusZh : c.campusEn) || '').trim();
+  }
+  /* 食堂頁標題膠囊：「短名 · 另一語言名稱」。中英同名（HKBU 多數食堂、AC2／AC3）
+     時只留短名，避免出現「Harmony · Harmony Cafeteria」這種自我重複。 */
+  function canteenBandName(c) {
+    const zh = I18N.lang() === 'zh';
+    const main = String((zh ? c.zh : c.en) || '').trim();
+    const alt = String((zh ? c.en : c.zh) || '').trim();
+    if (alt && alt.toLowerCase() !== main.toLowerCase()) return `${c.short} · ${alt}`;
+    const short = String(c.short || '').trim();
+    return short || main;
   }
   function canteenFullName(c) {
     const name = String((I18N.lang() === 'zh' ? c.zh : c.en) || '').trim();
@@ -223,9 +267,11 @@
     'chipSmall', 'chipNotTasty', 'chipTasteless', 'chipPricey',
   ];
 
+  const QUICK_VERDICT_KEY = { must: 'verdictMust', ok: 'verdictOk', avoid: 'verdictAvoid' };
+
   function quickRateBar(d) {
     const btn = (verdict, key) => `
-      <button type="button" class="quick-btn quick-btn-${verdict}" data-quick="${verdict}">
+      <button type="button" class="quick-btn quick-btn-${verdict}" data-quick="${verdict}" aria-pressed="false">
         <b>${esc(I18N.t(key))}</b>
         <span>${esc(I18N.t('quickStars').replace('{n}', QUICK_RATINGS[verdict]))}</span>
       </button>`;
@@ -237,6 +283,13 @@
         </div>
         <div class="quick-btns">
           ${btn('must', 'verdictMust')}${btn('ok', 'verdictOk')}${btn('avoid', 'verdictAvoid')}
+        </div>
+        <div class="quick-confirm" hidden>
+          <span class="quick-confirm-msg" aria-live="polite"></span>
+          <div class="quick-confirm-actions">
+            <button type="button" class="quick-yes" data-quick-confirm>${esc(I18N.t('quickConfirm'))}</button>
+            <button type="button" class="quick-no" data-quick-cancel>${esc(I18N.t('quickCancel'))}</button>
+          </div>
         </div>
       </div>`;
   }
@@ -278,18 +331,24 @@
           ${dish.tags && dish.tags.includes('signature') ? `<span class="sig-flag">${esc(I18N.lang() === 'zh' ? '招牌' : 'SIGNATURE')}</span>` : ''}
         </span>
         <span class="dish-card-body">
-          <span class="dish-card-name">${esc(I18N.pick(dish))}<span class="dish-card-en">${esc(I18N.lang() === 'zh' ? dish.en : dish.zh)}</span></span>
+          <span class="dish-card-name">${esc(I18N.pick(dish))}${(() => {
+            /* 副名只印「另一種語言」，相同或空白就不印（英文菜單裡 en 曾有空字串） */
+            const alt = String((I18N.lang() === 'zh' ? dish.en : dish.zh) || '').trim();
+            return alt && alt !== I18N.pick(dish) ? `<span class="dish-card-en">${esc(alt)}</span>` : '';
+          })()}</span>
           ${verdictTag(s && s.verdict)}
           ${ratingLine(dish.id)}
         </span>
       </button>`;
   }
 
-  function sectionHead(kick, titleKey, subKey, action) {
+  /** 區塊標題：標題自己承重，不再壓一行英文眉題。
+   *  舊版每個區塊都是「小眉題 ＋ 大標題 ＋ 副標」三層，掃視時眼睛要跨三個層級；
+   *  現在收成兩層，副標只補一句話，右側留給動作連結。 */
+  function sectionHead(titleKey, subKey, action) {
     return `
       <div class="section-head reveal">
-        <div>
-          <p class="kicker">${esc(kick)}</p>
+        <div class="section-head-copy">
           <h2 class="section-title">${esc(I18N.t(titleKey))}</h2>
           ${subKey ? `<p class="section-sub">${esc(I18N.t(subKey))}</p>` : ''}
         </div>
@@ -300,9 +359,12 @@
   /* ── 畫面：首頁 ──────────────────────────── */
 
   function heroDish() {
-    return DATA.dishes.find((d) => d.zh === '鴨腿湯河粉')
-      || DATA.dishes.find((d) => (d.photo || '').includes('noodle-hofun'))
-      || DATA.dishes.find((d) => d.photo);
+    // 多大學版本：每間大學自己指定 hero 主打菜（universities.js 的 heroDishId），
+    // 換大學時 hero 那碗飯也跟著換，而不是永遠停在 CityU 的鴨腿湯河粉。
+    const uni = currentUni();
+    return (uni && uni.heroDishId && dishById(uni.heroDishId))
+      || DATA.dishes.find((d) => d.photo)
+      || DATA.dishes[0];
   }
 
   function heroPhotos() {
@@ -312,39 +374,49 @@
     const stamp = s && s.verdict
       ? `<span class="hero-stamp stamp-${s.verdict}">${esc(I18N.t({ must: 'verdictMust', ok: 'verdictOk', avoid: 'verdictAvoid' }[s.verdict]))}</span>`
       : '';
+    // hero 那碗飯用「這間大學主打菜」自己的照片（v2.1.0）。
+    // 以前不管哪間學校都放同一張 assets/v7/hero-bowl.jpg，於是 HKU 的
+    // 燒味雙拼飯配了一碗牛腩麵 —— 價格牌寫的和照片裡的根本不是同一道菜。
+    const heroSrc = (hd && hd.photo) || 'assets/v7/hero-bowl.jpg';
     const dishLink = hd
       ? `<button class="bowl-img" data-action="open-dish" data-id="${hd.id}" aria-label="${esc(I18N.pick(hd))}">
-           <img src="assets/v7/hero-bowl.jpg" alt="${esc(hd.photo ? '' : I18N.pick(hd))}">
+           <img src="${esc(heroSrc)}" alt="${esc(hd.photo ? '' : I18N.pick(hd))}">
          </button>`
       : '';
-    const kicker = c
-      ? esc(I18N.lang() === 'zh' ? `${canteenFullName(c)}・今日主打` : `${canteenFullName(c)} · Today's pick`)
-      : esc(I18N.t('heroKicker'));
-    return { hd, c, kicker, dishLink, stamp };
+    return { hd, c, dishLink, stamp };
+  }
+
+  /* hero 上的小字說明（哪間食堂的今日主打）不放標題上方 —— 那裡原本是眉題。
+     改成黏在價格牌裡，資訊位置更靠近它描述的那張照片。 */
+  function heroCredit(c) {
+    if (!c) return '';
+    return `<span class="pt-from">${esc(canteenFullName(c))}</span>`;
   }
 
   /* hero 的分層進場只在「首次載入」播一次：語言切換、從飯堂頁返回都不重播，
      避免使用者只是想換語言卻被整頁重演一次開場。 */
   let heroEntered = false;
 
-  function renderHero() {
-    const { hd, kicker, dishLink, stamp } = heroPhotos();
+  /** prefix：掛在 hero 之前的前置標記（大學頁用它放麵包屑）。 */
+  function renderHero(prefix) {
+    const { hd, c, dishLink, stamp } = heroPhotos();
+    // hero 的標語與說明跟著「目前大學」走：universities.js 的 taglineZh/noteZh。
+    const uni = currentUni();
+    const tagline = uni ? (I18N.lang() === 'zh' ? uni.taglineZh : uni.taglineEn) : I18N.t('heroTagline');
+    const note = uni ? (I18N.lang() === 'zh' ? uni.noteZh : uni.noteEn) : '';
     const enterAttr = heroEntered || reduceMotion() ? '' : ' data-enter';
     heroEntered = true;
-    appEl.innerHTML = `
+    appEl.innerHTML = `${prefix || ''}
       <section class="hero"${enterAttr}>
-        <svg class="hero-blob" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><path d="M470 -60 C 300 -20 160 100 118 275 C 76 450 150 610 320 700 C 470 778 660 790 810 720 C 890 683 950 635 1000 575 L 1000 -60 Z" fill="#CE2F1F"/></svg>
+        <svg class="hero-blob" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><path d="M470 -60 C 300 -20 160 100 118 275 C 76 450 150 610 320 700 C 470 778 660 790 810 720 C 890 683 950 635 1000 575 L 1000 -60 Z"/></svg>
         <div class="wrap hero-grid">
           <div class="hero-copy">
-            <p class="kicker">${kicker}</p>
             <h1 class="hero-title">Eaty<i>.</i></h1>
-            <p class="hero-tagline">${esc(I18N.t('heroTagline'))}</p>
-            <p class="hero-note">${esc(I18N.lang() === 'zh'
-              ? `全站已收錄 ${DATA.dishes.length} 道菜、${DATA.canteens.length} 間食堂；菜單抄錄自官方點餐平台與現場菜牌。`
-              : `${DATA.dishes.length} dishes across ${DATA.canteens.length} canteens — transcribed from official ordering platforms and on-site menu boards.`)}</p>
+            <p class="hero-tagline">${esc(tagline)}</p>
+            <p class="hero-note">${esc(note)}</p>
             <div class="hero-actions">
               <button class="btn btn-ink" data-action="open-random">${icon('dice')}${esc(I18N.t('heroCta2'))}</button>
-              <a class="btn btn-ghost" href="#/" data-scroll="canteens">${esc(I18N.t('heroCta1'))}</a>
+              <a class="btn btn-ghost" href="${uni ? `#/u/${esc(uni.id)}` : '#/'}" data-scroll="canteens">${esc(I18N.t('heroCta1'))}</a>
             </div>
           </div>
           <div class="hero-art">
@@ -353,6 +425,7 @@
               ${hd ? `<div class="price-tag">
                   <span class="p">${fmtPrice(hd.price)}</span>
                   <span class="d">${esc(I18N.pick(hd))}${(I18N.lang() === 'zh' ? hd.en : hd.zh) && (I18N.lang() === 'zh' ? hd.en : hd.zh) !== I18N.pick(hd) ? `<small>${esc(I18N.lang() === 'zh' ? hd.en : hd.zh)}</small>` : ''}</span>
+                  ${heroCredit(c)}
                 </div>` : ''}
               ${stamp}
               <img class="garnish chili-1" src="assets/v7/chili-a.png" alt="" aria-hidden="true">
@@ -370,18 +443,23 @@
   function canteenCard(c) {
     const dishes = DATA.dishes.filter((d) => d.canteenId === c.id);
     const rated = dishes.filter((d) => state.stats[d.id]);
+    const altName = canteenAltName(c);
     const avg = rated.length
       ? (rated.reduce((s, d) => s + state.stats[d.id].avg, 0) / rated.length)
       : 0;
     return `
       <div class="canteen-cell">
         <a class="canteen-card canteen-${c.color} reveal" href="#/canteen/${c.id}">
-          ${c.photo ? `<figure><img src="${esc(c.photo)}" alt="${esc(I18N.lang() === 'zh' ? c.zh : c.en)}" loading="lazy"></figure>` : ''}
+          ${c.photo
+            // 沒有場地照（例：5380 Cafe 找不到官方照片）就不放圖，改用校色底的
+            // 文字佔位——比拿一張不相關的圖充數誠實，版面也不會塌。
+            ? `<figure><img src="${esc(c.photo)}" alt="${esc(I18N.lang() === 'zh' ? c.zh : c.en)}" loading="lazy"></figure>`
+            : `<figure class="canteen-card-noimg" aria-hidden="true"><span>${esc(c.short)}</span></figure>`}
           <span class="canteen-card-body">
             <span class="chip">${esc(c.short)}${I18N.lang() === 'zh' ? ` · ${esc(c.bldgZh)}` : ` · ${esc(c.bldgEn)}`}</span>
             <span class="canteen-card-name">
               <h3>${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</h3>
-              <span>${esc(canteenAltName(c))}</span>
+              ${altName ? `<span>${esc(altName)}</span>` : ''}
             </span>
             <span class="canteen-card-meta">
               <span class="row">${icon('clock')}${esc(I18N.lang() === 'zh' ? c.hoursZh : c.hoursEn)}</span>
@@ -403,7 +481,7 @@
       .slice(0, 6);
     if (!list.length) return '';
     return `
-      ${sectionHead('Fresh Reviews', 'latestHeading', 'latestSub', `<a class="linklike" href="#/" data-scroll="canteens">${esc(I18N.t('heroCta1'))}${icon('arrow')}</a>`)}
+      ${sectionHead('latestHeading', 'latestSub', `<a class="linklike" href="#/u/${esc(currentUni() ? currentUni().id : '')}" data-scroll="canteens">${esc(I18N.t('viewAll'))}${icon('arrow')}</a>`)}
       <div class="review-wall">
         ${list.map((r) => {
           const d = dishById(r.dishId);
@@ -424,15 +502,149 @@
       </div>`;
   }
 
+  /* ── 畫面：首頁（第一層 —— 選大學）──────── */
+
+  /** 首頁 hero：不綁定任何一間大學 —— 標語講全站，右邊固定一碗主視覺。 */
+  function renderPickerHero() {
+    const enterAttr = heroEntered || reduceMotion() ? '' : ' data-enter';
+    heroEntered = true;
+    // 收錄數字（大學／食堂／菜品）直接寫進說明句，不再另起一行統計 ——
+    // 同一組數字寫兩次是重複；包成 <b> 讓 bindCounters() 做滾動。
+    const noteHtml = esc(I18N.t('pickNote'))
+      .replace('{u}', `<b>${universities().length}</b>`)
+      .replace('{c}', `<b>${DATA.raw.canteens.length}</b>`)
+      .replace('{d}', `<b>${DATA.raw.dishes.length}</b>`);
+    appEl.innerHTML = `
+      <section class="hero hero--pick"${enterAttr}>
+        <svg class="hero-blob" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><path d="M470 -60 C 300 -20 160 100 118 275 C 76 450 150 610 320 700 C 470 778 660 790 810 720 C 890 683 950 635 1000 575 L 1000 -60 Z"/></svg>
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <h1 class="hero-title">Eaty<i>.</i></h1>
+            <p class="hero-tagline">${esc(I18N.t('pickTagline'))}</p>
+            <p class="hero-note hero-note--count">${noteHtml}</p>
+            <div class="hero-actions">
+              <button class="btn btn-ink" data-scroll="schools">${esc(I18N.t('pickCta'))}${icon('arrow')}</button>
+              <button class="btn btn-ghost" data-action="open-random">${icon('dice')}${esc(I18N.t('heroCta2'))}</button>
+            </div>
+          </div>
+          <div class="hero-art">
+            <div class="bowl">
+              <img class="bowl-img" src="assets/v7/hero-bowl.jpg" alt="" aria-hidden="true">
+              <img class="garnish chili-1" src="assets/v7/chili-a.png" alt="" aria-hidden="true">
+              <img class="garnish chili-2" src="assets/v7/chili-b.png" alt="" aria-hidden="true">
+              ${leafSvg('leaf-1', LEAF_A)}
+              ${leafSvg('leaf-2', LEAF_B)}
+              ${leafSvg('leaf-3', LEAF_A)}
+              <span class="sprk sp-1"></span><span class="sprk sp-2"></span><span class="sprk sp-3"></span><span class="sprk sp-4"></span>
+            </div>
+          </div>
+        </div>
+      </section>`;
+  }
+
+  /** 大學卡：食堂數／菜品數直接從原始資料算（不吃「目前大學」的過濾結果）。
+   *
+   *  版面（v1.3.0 改版）：上半 16:9 校園照，照片底部壓一層深色漸層，
+   *  校名以白字疊在左下；左上角是校色簡寫膠囊 ＋（虛構菜單的）測試資料標籤；
+   *  下半是白底資訊帶 —— 標語、食堂數／菜品數、進入箭頭。
+   *  沒有 u.photo 時自動退回「校色漸層 ＋ 巨大幽靈短名」，不會出現破圖。
+   */
+  function schoolCard(u) {
+    const canteens = DATA.raw.canteens.filter((c) => c.uni === u.id);
+    const dishes = DATA.raw.dishes.filter((d) => d.uni === u.id);
+    const isTest = /測試資料|Test data/i.test(`${u.noteZh || ''} ${u.noteEn || ''}`);
+    const zh = I18N.lang() === 'zh';
+    const main = I18N.pick(u);
+    const alt = zh ? u.en : u.zh;
+    const photo = String(u.photo || '').trim();
+    const altText = zh ? `${main}校園` : `${alt} campus`;
+    // 校色：四間已定義的大學走 --uni-<id>；若日後加了沒定義色的學校，退回資料的 ac 系列
+    const uniColor = UNI_IDS.indexOf(u.id) >= 0 ? `var(--uni-${u.id})` : `var(--${u.color || 'ac1'})`;
+    const media = photo
+      ? `<img class="school-img" src="${esc(photo)}" alt="${esc(altText)}" loading="lazy" decoding="async" width="1200" height="675">`
+      : `<span class="school-ghost" aria-hidden="true">${esc(u.short)}</span>`;
+    return `
+      <a class="school-card school-${esc(u.id)}${photo ? '' : ' school-card--nophoto'} reveal" href="#/u/${esc(u.id)}" style="--dot:${uniColor}">
+        <span class="school-photo">
+          ${media}
+          <span class="school-veil" aria-hidden="true"></span>
+          <span class="school-tags">
+            <span class="school-short">${esc(u.short)}</span>
+            ${isTest ? `<span class="school-test">${esc(I18N.t('testDataTag'))}</span>` : ''}
+          </span>
+          <span class="school-name">
+            <b>${esc(main)}</b>
+            ${alt && alt !== main ? `<span>${esc(alt)}</span>` : ''}
+          </span>
+        </span>
+        <span class="school-body">
+          <span class="school-tagline">${esc(zh ? u.taglineZh : u.taglineEn)}</span>
+          <span class="school-foot">
+            <span class="school-stats">
+              <span class="school-stat"><b>${canteens.length}</b>${esc(I18N.t('schoolCanteenUnit'))}</span>
+              <span class="school-stat"><b>${dishes.length}</b>${esc(I18N.t('schoolDishUnit'))}</span>
+            </span>
+            <span class="school-go">${esc(I18N.t('schoolEnter'))}${icon('arrow')}</span>
+          </span>
+        </span>
+      </a>`;
+  }
+
   function renderHome() {
+    renderPickerHero();
+    const schoolsSec = `
+      <section class="section" id="schools">
+        <div class="wrap">
+          ${sectionHead('schoolsHeading', 'schoolsSub')}
+          <div class="school-grid">
+            ${universities().map(schoolCard).join('')}
+          </div>
+        </div>
+      </section>`;
+    appEl.insertAdjacentHTML('beforeend', schoolsSec + renderFooter());
+    // 首頁沒有分區可跳，導覽全部恢復可用（大學頁才會依有無評論熄掉個別入口）
+    document.querySelectorAll('#site-header .header-link').forEach((el) => el.classList.remove('is-off'));
+    bindReveals();
+    bindCounters();
+    bindTilt();
+    queueScrollFx();
+  }
+
+  /* ── 畫面：大學頁（第二層 —— 該校食堂列表）── */
+
+  function renderUniversity(uniId) {
+    const uni = universities().find((u) => u.id === uniId);
+    if (!uni) { location.hash = '#/'; return; }        // 認不出的大學代號 → 回選單
+
+    // 直接貼上 #/u/hku 這種連結時，作用中的資料也要跟著換（不能只換畫面）
+    if (Menu && Menu.currentUni !== uni.id) {
+      Menu.setUniversity(uni.id);
+      state.filters = {};
+      chipScopeKey = '';
+      chipScrollLeft = 0;
+      renderHeader();                                  // 頁首切換器的選中狀態
+    }
+
     const hot = hotPicks(6);
     const avoid = avoidList(5);
-    renderHero();
+    const crumb = `
+      <div class="wrap"><p class="crumb crumb-top">
+        <a href="#/">${icon('back')}${esc(I18N.t('bcHome'))}</a><span>／</span>
+        <b class="crumb-uni">${esc(uni.short)}</b>
+      </p></div>`;
+    renderHero(crumb);
 
     const canteensSec = `
       <section class="section" id="canteens">
         <div class="wrap">
-          ${sectionHead('The Canteens', 'canteensHeading')}
+          <div class="section-head reveal">
+            <div class="section-head-copy">
+              <h2 class="section-title">${esc(I18N.t('uniHeading')
+                .replace('{uni}', uni.short)
+                .replace('{n}', DATA.canteens.length))}</h2>
+              <p class="section-sub">${esc(I18N.t('uniSub'))}</p>
+            </div>
+          </div>
           <div class="canteen-grid">
             ${DATA.canteens.map(canteenCard).join('')}
           </div>
@@ -440,9 +652,9 @@
       </section>`;
 
     const hotSec = hot.length ? `
-      <section class="section section--soft">
+      <section class="section section--soft" id="hot">
         <div class="wrap">
-          ${sectionHead("Today's Hot", 'hotHeading', 'hotSub', `<a class="linklike" href="#/" data-scroll="canteens">${esc(I18N.t('viewAll'))}${icon('arrow')}</a>`)}
+          ${sectionHead('hotHeading', 'hotSub', `<a class="linklike" href="#/u/${esc(uni.id)}" data-scroll="canteens">${esc(I18N.t('viewAll'))}${icon('arrow')}</a>`)}
           <div class="h-scroll">
             ${hot.map((d) => dishCard(d)).join('')}
           </div>
@@ -454,7 +666,6 @@
         <div class="wrap">
           <div class="avoid-panel reveal">
             <div>
-              <p class="kicker">Avoid List</p>
               <h2 class="section-title">${esc(I18N.t('avoidHeading'))}</h2>
               <p class="section-sub">${esc(I18N.t('avoidSub'))}</p>
               <p class="avoid-note">${esc(I18N.t('avoidNote'))}</p>
@@ -464,11 +675,17 @@
                 const c = canteenById(d.canteenId);
                 const s = state.stats[d.id];
                 const avoidPct = Math.round(s.avoidRatio * 100);
+                /* 主名走目前語言；副名放「另一種語言」。兩者相同或副名為空就不印，
+                   否則英文模式下會把同一個英文名印兩次、缺名時整行只剩編號與價錢。 */
+                const mainName = I18N.pick(d);
+                const altName = String((I18N.lang() === 'zh' ? d.en : d.zh) || '').trim();
+                const altHtml = altName && altName !== mainName
+                  ? `<span class="avoid-dish-en">${esc(altName)}</span>` : '';
                 return `
                 <li class="avoid-row" style="--i:${i}">
                   <span class="avoid-rank" aria-hidden="true">${i + 1}</span>
                   <button class="avoid-dish" data-action="open-dish" data-id="${d.id}">
-                    <span class="avoid-dish-name">${esc(I18N.pick(d))}<span class="avoid-dish-en">${esc(d.en)}</span></span>
+                    <span class="avoid-dish-name">${esc(mainName)}${altHtml}</span>
                     <span class="avoid-dish-meta">${esc(c ? c.short : '')} · ${fmtPrice(d.price)}</span>
                   </button>
                   <span class="avoid-votes">
@@ -489,6 +706,14 @@
       </section>`;
 
     appEl.insertAdjacentHTML('beforeend', canteensSec + hotSec + avoidSec + reviewsSec + renderFooter());
+    // 這間學校還沒有任何評論時，熱門與避雷榜都不會渲染——導覽上那兩個入口要跟著熄掉，
+    // 否則按下去會沒反應（HKU 目前就是 0 則評論）。
+    const navOff = (key, missing) => {
+      const el = document.querySelector(`#site-header .header-link[data-scroll="${key}"]`);
+      if (el) el.classList.toggle('is-off', !!missing);
+    };
+    navOff('hot', !hot.length);
+    navOff('avoid', !avoid.length);
     bindReveals();
     queueScrollFx();
   }
@@ -503,7 +728,18 @@
 
   function renderCanteen(canteenId, opts) {
     const enter = !!(opts && opts.enter) && !reduceMotion();
-    const c = canteenById(canteenId);
+    let c = canteenById(canteenId);
+    if (!c && Menu) {
+      // 這間食堂可能屬於另一間大學（例如別人分享的連結）→ 自動切到該校，而不是彈回首頁
+      const owner = universities().find((u) =>
+        DATA.raw.canteens.some((x) => x.uni === u.id && x.id === canteenId));
+      if (owner && owner.id !== Menu.currentUni) {
+        Menu.setUniversity(owner.id);
+        state.filters = {};
+        renderHeader();
+        c = canteenById(canteenId);
+      }
+    }
     if (!c) { location.hash = '#/'; return; }
     // 換飯堂才把 chip 列的捲動位置歸零；同一個飯堂重繪（篩選／排序）要留住位置，
     // 否則點完右邊的分類、整列就跳回起點，那個分類馬上又不見了。
@@ -559,7 +795,9 @@
     const enterCls = enter ? ' grid-enter' : '';
     let gridHtml = '';
     if (!dishes.length) {
-      gridHtml = `<p class="empty-note">${esc(I18N.t('noResult'))}</p>`;
+      // 整間食堂都沒有菜（官方只給 PDF／圖片）→ 講清楚是「待補」，而不是「這個分類沒有」
+      const key = allDishes.length ? 'noResult' : 'noMenuYet';
+      gridHtml = `<p class="empty-note">${esc(I18N.t(key))}</p>`;
     } else if (f.cat) {
       // 只看單一分類時沒有 .cat-head，檔口的點餐連結改掛在網格上方
       const cat = catById(f.cat);
@@ -615,14 +853,14 @@
     // 會整個蓋掉 .wrap 的左右 64px 內距 → 卡片貼齊畫面邊緣。
     appEl.innerHTML = `
       <div class="wrap">
-        <p class="crumb"><a href="#/">${icon('back')}${esc(I18N.t('backHome'))}</a><span>／</span><b style="color:var(--ink)">${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</b></p>
+        <p class="crumb"><a href="#/">${icon('back')}${esc(I18N.t('bcHome'))}</a><span>／</span>${(() => { const u = uniOfCanteen(c); return u ? `<a href="#/u/${esc(u.id)}">${esc(u.short)}</a><span>／</span>` : ''; })()}<b style="color:var(--ink)">${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</b></p>
         <section class="canteen-band canteen-band-${c.color}">
           <div class="canteen-band-grid">
             ${(c.photo || '')
               ? `<figure class="canteen-band-photo"><img src="${esc(c.photo)}" alt="${esc(I18N.lang() === 'zh' ? c.zh : c.en)}"></figure>`
               : `<figure class="canteen-band-photo"><div class="dish-ph"><span class="dish-ph-glyph">${esc(c.short)}</span></div></figure>`}
             <div class="canteen-band-copy">
-              <span class="chip">${esc(c.short)} · ${esc(I18N.lang() === 'zh' ? c.en : c.zh)}</span>
+              <span class="chip">${esc(canteenBandName(c))}</span>
               <h1 class="canteen-name">${esc(I18N.lang() === 'zh' ? c.zh : c.en)}</h1>
               <p class="canteen-bldg">${icon('pin')}${esc(I18N.lang() === 'zh' ? c.bldgZh : c.bldgEn)}</p>
               <p class="canteen-hours">${icon('clock')}${esc(I18N.lang() === 'zh' ? c.hoursZh : c.hoursEn)}</p>
@@ -667,11 +905,21 @@ ${mealBar}
 
   function renderFooter() {
     const samplesHidden = !state.reviews.some((r) => r.sample);
+    const CFG = window.EATY_CONFIG;
     // HIDE_SAMPLES 開啟時範例評論無法被叫回來（reviews.js 的 samplesHidden()
     // 用 `CFG.HIDE_SAMPLES || ...` 短路），切換鈕按了也不會動 —— 索性不畫。
-    const sampleToggle = window.CITYU_EATS_CONFIG.HIDE_SAMPLES
+    const sampleToggle = CFG.HIDE_SAMPLES
       ? ''
       : `<button class="linklike" data-action="toggle-samples">${esc(I18N.t(samplesHidden ? 'footerSamplesShown' : 'footerSamplesHidden'))}</button>`;
+    // 官方餐廳資訊：多大學版本指向「目前這間大學」的官方餐飲頁（universities.js 的 officialUrl）。
+    const uni = currentUni();
+    const officialLink = uni && uni.officialUrl
+      ? `<a href="${esc(uni.officialUrl)}" target="_blank" rel="noopener">${esc(I18N.t('footerOfficial'))}${icon('ext')}</a>`
+      : '';
+    // 意見回饋刻意放在站外（Google Form）：站內掛問卷會干擾留言率的量測。
+    const feedbackLink = CFG.FEEDBACK_URL
+      ? `<a href="${esc(CFG.FEEDBACK_URL)}" target="_blank" rel="noopener">${esc(I18N.t('footerFeedback'))}${icon('ext')}</a>`
+      : '';
     return `
       <footer class="footer">
         <div class="wrap footer-grid">
@@ -683,10 +931,10 @@ ${mealBar}
             <p class="footer-note footer-note-strong">${esc(I18N.t('footerCoverageNote'))}</p>
           </div>
           <div class="footer-links">
-            <a href="${esc(window.CITYU_EATS_CONFIG.FEEDBACK_URL)}" target="_blank" rel="noopener">${esc(I18N.t('footerFeedback'))}${icon('ext')}</a>
-            <a href="https://www.cityu.edu.hk/zh-hk/directories/catering" target="_blank" rel="noopener">${esc(I18N.t('footerOfficial'))}${icon('ext')}</a>
+            ${feedbackLink}
+            ${officialLink}
             ${sampleToggle}
-            <span class="footer-storage">v${esc(window.CITYU_EATS_CONFIG.VERSION || '')} · ${esc(I18N.t('footerUpdated'))} · ${esc(I18N.t(store.remoteAvailable() ? 'footerStorageCloud' : 'footerStorageLocal'))}</span>
+            <span class="footer-storage">v${esc(CFG.VERSION || '')} · ${esc(I18N.t('footerUpdated'))} · ${esc(I18N.t(store.remoteAvailable() ? 'footerStorageCloud' : 'footerStorageLocal'))}</span>
           </div>
         </div>
       </footer>`;
@@ -895,7 +1143,7 @@ ${mealBar}
    * 所以預設就把它們排在黑名單裡。只影響抽籤，不影響食堂頁的分類瀏覽。
    */
   function rollBlacklist() {
-    const m = window.CityuEatsMenu;
+    const m = window.EatyMenu;
     return (m && m.rollBlacklist) || { dishes: new Set(), categories: new Set() };
   }
 
@@ -1130,6 +1378,64 @@ ${mealBar}
     }, wait);
   }
 
+  /* ── 數字滾動 ────────────────────────────────
+   * 首頁的「4 間大學 · 24 間飯堂 · N 道菜」從 0 數上去。
+   * 用 ease-out cubic：一開始衝，最後慢慢收，像計數器停下來而不是剎停。 */
+  function countUp(el, target, dur) {
+    if (!el) return;
+    if (reduceMotion()) { el.textContent = String(target); return; }
+    const t0 = performance.now();
+    const span = dur || 820;
+    el.textContent = '0';
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / span);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = String(target);   // 收在整數，避免顯示差 1
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function bindCounters() {
+    appEl.querySelectorAll('.hero-note b, .school-stat b').forEach((el, i) => {
+      const target = parseInt(el.textContent.replace(/[^\d]/g, ''), 10);
+      if (!Number.isFinite(target) || target <= 0) return;
+      // 每顆錯開 70ms：四張卡的數字像被依序按下，而不是同時起跑
+      setTimeout(() => countUp(el, target, 820), reduceMotion() ? 0 : i * 70);
+    });
+  }
+
+  /* ── 大學卡微傾斜 ────────────────────────────
+   * 只掛在有真指標的裝置（觸控不會傾斜）。
+   * 用 rAF 節流：pointermove 一秒可以來 120 次，直接寫 style 會讓主執行緒排隊。 */
+  function bindTilt() {
+    if (reduceMotion()) return;
+    if (!window.matchMedia || !window.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+    appEl.querySelectorAll('.school-card').forEach((card) => {
+      let raf = 0;
+      let tilting = false;
+      card.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
+        if (!tilting) { tilting = true; card.classList.add('is-tilting'); }
+        const r = card.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          card.style.transform = `perspective(1000px) rotateX(${(-py * 4).toFixed(2)}deg)`
+            + ` rotateY(${(px * 5).toFixed(2)}deg) translateY(-6px)`;
+        });
+      });
+      card.addEventListener('pointerleave', () => {
+        cancelAnimationFrame(raf);
+        tilting = false;
+        card.classList.remove('is-tilting');
+        card.style.transform = '';   // 交還給 CSS 的 hover 規則
+      });
+    });
+  }
+
   function bindReveals() {
     const token = ++revealToken;
     const els = Array.from(appEl.querySelectorAll('.reveal'));
@@ -1323,11 +1629,15 @@ ${mealBar}
 
   /* ── 路由 ──────────────────────────────── */
 
+  /* 三層路由：#/（選大學）→ #/u/<uniId>（該校食堂）→ #/canteen/<id>（菜單）。
+     舊的 #/canteen/... 連結照樣可用（會自動切到該食堂所屬大學）。 */
   function parseRoute() {
     const hash = location.hash || '#/';
-    const m = hash.match(/^#\/canteen\/([\w-]+)/);
-    if (m) state.route = { view: 'canteen', canteenId: m[1] };
-    else state.route = { view: 'home', canteenId: null };
+    const mCanteen = hash.match(/^#\/canteen\/([\w-]+)/);
+    if (mCanteen) { state.route = { view: 'canteen', canteenId: mCanteen[1], uniId: null }; return; }
+    const mUni = hash.match(/^#\/u\/([\w-]+)/);
+    if (mUni) { state.route = { view: 'uni', canteenId: null, uniId: mUni[1] }; return; }
+    state.route = { view: 'home', canteenId: null, uniId: null };
   }
 
   function scrollToSection(id) {
@@ -1344,13 +1654,48 @@ ${mealBar}
    */
   let vtReady = false;
 
+  /* ── 校色 ────────────────────────────────────
+   * 校色只出現在「你正在看哪間大學」的地方：頁首圓點、麵包屑、食堂卡hover邊、
+   * 大學頁的標題帶。首頁（還沒選校）刻意不帶任何校色，讓品牌紅自己站住。
+   * 掛在 :root 而不是逐個元素寫 style，是為了讓切換大學時顏色是漸變的。 */
+  const UNI_IDS = ['cityu', 'hku'];
+
+  /** 目前這一頁屬於哪間大學（首頁回空字串）。 */
+  function activeUniId() {
+    if (state.route.view === 'uni') return state.route.uniId || '';
+    if (state.route.view === 'canteen') {
+      const c = canteenById(state.route.canteenId);
+      return (c && c.uni) || '';
+    }
+    return '';
+  }
+
+  function applyUniTheme() {
+    const id = activeUniId();
+    const root = document.documentElement;
+    if (UNI_IDS.indexOf(id) >= 0) {
+      root.style.setProperty('--uni', `var(--uni-${id})`);
+      root.style.setProperty('--uni-tint', `var(--uni-${id}-tint)`);
+      root.setAttribute('data-uni', id);
+    } else {
+      root.style.removeProperty('--uni');
+      root.style.removeProperty('--uni-tint');
+      root.removeAttribute('data-uni');
+    }
+  }
+
   function render() {
     parseRoute();
     closeModal(true);            // 路由切換：直接拆掉，不讓退場動畫疊在新畫面上
 
     const paint = () => {
       if (state.route.view === 'canteen') renderCanteen(state.route.canteenId);
+      else if (state.route.view === 'uni') renderUniversity(state.route.uniId);
       else renderHome();
+      // 校色要在繪製「之後」才決定：冷開 #/canteen/hkbu-… 時，該食堂所屬的大學
+      // 得等 renderCanteen() 把資料切過去才查得到，放在前面會退回品牌紅。
+      // paint 是同步函式，同一幀內設變數與開頭設定視覺上沒有分別。
+      applyUniTheme();
       window.scrollTo(0, 0);
       queueScrollFx();
     };
@@ -1422,7 +1767,20 @@ ${mealBar}
     if (!actionEl) return;
     const action = actionEl.getAttribute('data-action');
 
-    if (action === 'open-dish') {
+    if (action === 'set-uni') {
+      // 就地更新選中狀態（不重建頁首），滑動指示器才會從舊鈕滑到新鈕；
+      // 重建 DOM 的話新頁首的指示器會直接出現在終點，動畫等於沒有。
+      const sw = actionEl.closest('.uni-switch');
+      if (sw) {
+        sw.querySelectorAll('.uni-btn').forEach((b) => {
+          const on = b === actionEl;
+          b.classList.toggle('is-on', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        moveUniThumb(!reduceMotion());
+      }
+      switchUniversity(actionEl.getAttribute('data-id'));
+    } else if (action === 'open-dish') {
       e.preventDefault();
       openDish(actionEl.getAttribute('data-id'));
     } else if (action === 'close-modal') {
@@ -1468,18 +1826,21 @@ ${mealBar}
     }
   });
 
-  // 頁首／hero 的分區連結：跨頁先返首頁再捲動
+  // 頁首／hero 的分區連結：目標不在目前這一頁時，先照 href 導航再捲動
   document.addEventListener('click', (e) => {
     const link = e.target.closest('[data-scroll]');
     if (!link) return;
     e.preventDefault();
     const target = link.getAttribute('data-scroll');
-    if (state.route.view !== 'home') {
-      location.hash = '#/';
-      setTimeout(() => scrollToSection(target), 80);
-    } else {
-      scrollToSection(target);
+    if (!document.getElementById(target)) {
+      const href = link.getAttribute('href');
+      if (href && href !== location.hash) {
+        location.hash = href;
+        setTimeout(() => scrollToSection(target), 140);   // 等新畫面畫好
+        return;
+      }
     }
+    scrollToSection(target);
   });
 
   document.addEventListener('change', (e) => {
@@ -1491,20 +1852,67 @@ ${mealBar}
   });
 
   document.addEventListener('click', (e) => {
-    // 一鍵評分：按下即送出（判定 → 星級 → 空食後感）
+    // 快速評分 → 兩步：第 1 步只是「選取」，第 2 步按「確認送出」才真的寫入。
+    // 這樣按錯可以改、可以取消，不會留下一筆錯的評分。
     const quickBtn = e.target.closest('.quick-btn');
     if (quickBtn) {
       const bar = quickBtn.closest('.quick-rate');
-      const dishId = bar ? bar.getAttribute('data-dish') : '';
+      if (!bar) return;
       const verdict = quickBtn.getAttribute('data-quick');
-      const nickInput = modalRoot.querySelector('.review-form input[name="nickname"]');
+      bar.querySelectorAll('.quick-btn').forEach((b) => {
+        const on = b === quickBtn;
+        b.classList.toggle('is-picked', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      bar.setAttribute('data-picked', verdict);
+      const cf = bar.querySelector('.quick-confirm');
+      if (cf) {
+        const msg = cf.querySelector('.quick-confirm-msg');
+        if (msg) {
+          msg.textContent = I18N.t('quickConfirmMsg')
+            .replace('{v}', I18N.t(QUICK_VERDICT_KEY[verdict] || 'verdictOk'));
+        }
+        cf.hidden = false;
+        const yes = cf.querySelector('.quick-yes');
+        if (yes) {
+          yes.disabled = false;
+          yes.classList.remove('is-busy');
+          yes.focus({ preventScroll: true });
+        }
+      }
       popOnce(quickBtn, 400);
+      return;
+    }
+
+    // 第 2 步：確認送出
+    const quickYes = e.target.closest('[data-quick-confirm]');
+    if (quickYes) {
+      const bar = quickYes.closest('.quick-rate');
+      const dishId = bar ? bar.getAttribute('data-dish') : '';
+      const verdict = bar ? bar.getAttribute('data-picked') : '';
+      if (!dishId || !verdict) return;
+      const nickInput = modalRoot.querySelector('.review-form input[name="nickname"]');
       publishReview(dishId, {
         rating: QUICK_RATINGS[verdict] || 3,
         verdict,
         text: '',
         nickname: nickInput ? nickInput.value : '',
-      }, { btn: quickBtn, quick: true });
+      }, { btn: quickYes, quick: true });
+      return;
+    }
+
+    // 取消：回到未選狀態，什麼都不送出
+    const quickNo = e.target.closest('[data-quick-cancel]');
+    if (quickNo) {
+      const bar = quickNo.closest('.quick-rate');
+      if (!bar) return;
+      bar.removeAttribute('data-picked');
+      bar.querySelectorAll('.quick-btn').forEach((b) => {
+        b.classList.remove('is-picked');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      const cf = bar.querySelector('.quick-confirm');
+      if (cf) cf.hidden = true;
       return;
     }
 
@@ -1599,15 +2007,39 @@ ${mealBar}
 
   /* ── 頁首 ──────────────────────────────── */
 
+  /** 把大學切換器的「滑動指示器」移到目前選中的那顆按鈕。
+   *  animate=false：直接就位（頁首剛重建、視窗尺寸改變）；
+   *  animate=true ：走 CSS 過渡（點擊切換）—— 一塊墨黑膠囊從 A 滑到 B。 */
+  function moveUniThumb(animate) {
+    const sw = document.querySelector('#site-header .uni-switch');
+    if (!sw) return;
+    const thumb = sw.querySelector('.uni-thumb');
+    const on = sw.querySelector('.uni-btn.is-on');
+    if (!thumb) return;
+    if (!on) { thumb.style.opacity = '0'; return; }
+    const sr = sw.getBoundingClientRect();
+    const br = on.getBoundingClientRect();
+    if (!animate) thumb.classList.add('is-jump');   // 先關掉過渡，避免一開頁就自己滑一段
+    thumb.style.width = `${br.width}px`;
+    thumb.style.transform = `translateX(${br.left - sr.left}px)`;
+    thumb.style.opacity = '1';
+    if (!animate) { void thumb.offsetWidth; thumb.classList.remove('is-jump'); }
+  }
+
   function renderHeader() {
     const header = document.getElementById('site-header');
     header.innerHTML = `
       <div class="wrap header-row">
-        <a class="masthead" href="#/">Eaty<i>.</i></a>
+        <a class="masthead" href="#/">Eaty<i>.</i><span class="masthead-dot" aria-hidden="true"></span></a>
+        <div class="uni-switch" role="tablist" aria-label="${esc(I18N.t('uniSwitchLabel'))}">
+          <span class="uni-thumb" aria-hidden="true"></span>
+          ${universities().map((u) => `<button class="uni-btn${Menu && u.id === Menu.currentUni ? ' is-on' : ''}" role="tab" aria-selected="${Menu && u.id === Menu.currentUni ? 'true' : 'false'}" data-action="set-uni" data-id="${esc(u.id)}">${esc(u.short)}</button>`).join('')}
+        </div>
         <nav class="header-nav" aria-label="${esc(I18N.t('navCanteens'))}">
-          <a class="header-link" href="#/" data-scroll="canteens">${esc(I18N.t('navCanteens'))}</a>
-          <a class="header-link" href="#/" data-scroll="avoid">${esc(I18N.t('navAvoid'))}</a>
-          <a class="header-link" href="#/" data-scroll="reviews">${esc(I18N.t('navReviews'))}</a>
+          <a class="header-link" href="#/u/${esc(Menu ? Menu.currentUni : '')}" data-scroll="canteens">${esc(I18N.t('navCanteens'))}</a>
+          <a class="header-link" href="#/u/${esc(Menu ? Menu.currentUni : '')}" data-scroll="hot">${esc(I18N.t('navHot'))}</a>
+          <a class="header-link" href="#/u/${esc(Menu ? Menu.currentUni : '')}" data-scroll="avoid">${esc(I18N.t('navAvoid'))}</a>
+          <a class="header-link" href="#/u/${esc(Menu ? Menu.currentUni : '')}" data-scroll="reviews">${esc(I18N.t('navReviews'))}</a>
         </nav>
         <div class="header-actions">
           <button class="lang-btn" data-action-lang aria-label="${esc(I18N.t('langBtnLabel'))}">${esc(I18N.t('langBtn'))}</button>
@@ -1615,6 +2047,8 @@ ${mealBar}
         </div>
       </div>
       <span class="scroll-progress" aria-hidden="true"></span>`;
+
+    moveUniThumb(false);
 
     header.querySelector('[data-action-lang]').addEventListener('click', (e) => {
       const btn = e.currentTarget;
@@ -1625,13 +2059,21 @@ ${mealBar}
     });
   }
 
+  let thumbResizeBound = false;
+  if (!thumbResizeBound) {
+    thumbResizeBound = true;
+    window.addEventListener('resize', () => moveUniThumb(false));
+  }
+
   /* ── 啟動 ──────────────────────────────── */
 
   async function boot() {
-    renderHeader();
-    if (window.CityuEatsMenu) {
-      try { await window.CityuEatsMenu.load(); } catch (e) { /* 內建資料後備 */ }
+    // 先決定「目前大學」（讀 localStorage／預設）並過濾好資料，再畫頁首，
+    // 這樣大學切換器的選中狀態與首屏內容一開始就是對的。
+    if (window.EatyMenu) {
+      try { await window.EatyMenu.load(); } catch (e) { /* 本地上線不會失敗 */ }
     }
+    renderHeader();
     await loadReviews();
     render();                 // 首次繪製：不套用 View Transition，讓 hero 進場完整播出
     vtReady = true;           // 之後的路由／語言切換才做轉場

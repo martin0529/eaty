@@ -1,68 +1,102 @@
-/* Eaty — 城大搵食指南 中英雙語
+/* Eaty — 香港校園食堂指南 中英雙語
  * I18N.t(key) 取字；I18N.lang() 現在語言；I18N.set(lang) 切換並廣播 'langchange'。
+ *
+ * 文案原則
+ * ├ 標題不掛英文眉題：一句話講完，不要「小字＋大字＋副標」三層。
+ * ├ 動詞開頭的按鈕講清楚會發生什麼（「抽一道」而不是「開始」）。
+ * └ 中文用香港校園的說法（食堂、抵食、唔好味），英文用平輩語氣，不寫行銷腔。
  */
 (function () {
   'use strict';
-  const CFG = window.CITYU_EATS_CONFIG;
+  const CFG = window.EATY_CONFIG;
 
   const DICT = {
-    /* 頁首 */
+    /* 品牌（v2.1.0 改回原本的名字 Eaty） */
     siteName: { zh: 'Eaty', en: 'Eaty' },
+
+    /* 頁首 */
+    uniSwitchLabel: { zh: '選擇大學', en: 'Choose university' },
     navCanteens: { zh: '食堂', en: 'Canteens' },
-    navAvoid: { zh: '避雷榜', en: 'Avoid List' },
-    navReviews: { zh: '最新評論', en: 'Latest Reviews' },
-    navRandom: { zh: '今天吃什麼', en: 'What to Eat' },
+    navHot: { zh: '今日熱門', en: "Today's hot" },
+    navAvoid: { zh: '避雷榜', en: 'Avoid list' },
+    navReviews: { zh: '最新評論', en: 'Latest reviews' },
+    navRandom: { zh: '今天吃什麼', en: 'What to eat' },
     langBtn: { zh: 'EN', en: '中' },
     langBtnLabel: { zh: '切換至英文', en: 'Switch to Chinese' },
 
     /* 首頁 hero */
     heroKicker: { zh: '今日主打', en: "Today's pick" },
-    heroTagline: { zh: '城大覓食指南', en: 'CityU Canteen Guide' },
-    heroCta1: { zh: '瀏覽食堂', en: 'Browse canteens' },
-    heroCta2: { zh: '今天吃什麼？隨機幫你選', en: 'What to eat? Roll for me' },
+    heroTagline: { zh: '香港校園食堂指南', en: 'A guide to Hong Kong campus canteens' },
+    heroCta1: { zh: '看食堂', en: 'See the canteens' },
+    heroCta2: { zh: '隨便挑一間', en: 'Pick one for me' },
 
-    /* 飯堂卡 */
-    canteensHeading: { zh: '食堂，一份覓食地圖。', en: 'All canteens, one food map.' },
-    dishesCount: { zh: '項菜品', en: ' dishes' },
+    /* 首頁：選大學（第一層） */
+    pickKicker: { zh: '香港校園覓食地圖', en: 'Hong Kong campus food map' },
+    pickTagline: { zh: '兩間大學，一餐一餐試。', en: 'Two universities. One tray at a time.' },
+    pickNote: {
+      zh: '全站已收錄 {u} 間大學、{c} 間食堂、{d} 道菜；菜單抄錄自官方點餐平台與現場菜牌。',
+      en: '{u} universities, {c} canteens and {d} dishes so far — menus transcribed from official ordering platforms and counter boards.',
+    },
+    pickCta: { zh: '選一間大學開始', en: 'Pick a university' },
+    schoolsHeading: { zh: '你在哪間大學？', en: 'Which university?' },
+    schoolsSub: { zh: '每間學校吃得都不一樣，點進去看。', en: 'Every campus eats differently. Tap one to see how.' },
+    /* 大學卡下半的統計：數字由 app.js 直接輸出，這裡只放單位 */
+    schoolCanteenUnit: { zh: '間食堂', en: 'canteens' },
+    schoolDishUnit: { zh: '道菜', en: 'dishes' },
+    schoolEnter: { zh: '看食堂', en: 'View canteens' },
+    testDataTag: { zh: '測試資料', en: 'Test data' },
+
+    /* 大學頁（第二層）：麵包屑與標題 */
+    bcHome: { zh: '所有大學', en: 'All universities' },
+    bcCanteens: { zh: '食堂', en: 'Canteens' },
+    uniKicker: { zh: '校園食堂', en: 'Campus canteens' },
+    uniHeading: { zh: '{uni}，{n} 間食堂', en: '{uni} — {n} canteens' },
+    uniSub: { zh: '點一間，看完整菜單和同學的評價。', en: 'Open one for the full menu and student verdicts.' },
+    backToCanteens: { zh: '返回食堂列表', en: 'All canteens' },
+
+    /* 食堂卡 */
+    canteensHeading: { zh: '校園食堂，一份覓食地圖。', en: 'Campus canteens, one food map.' },
+    dishesCount: { zh: '道菜', en: ' dishes' },
     officialOrdering: { zh: '官方網上點餐', en: 'Official online ordering' },
     stallOrdering: { zh: '網上點餐', en: 'Order online' },
     stallOrderingLabel: { zh: '檔口點餐', en: 'Stall ordering' },
-    viewMenu: { zh: '查看菜單', en: 'View menu' },
-    viewAll: { zh: '查看全部', en: 'See all' },
+    viewMenu: { zh: '看菜單', en: 'View menu' },
+    viewAll: { zh: '全部', en: 'See all' },
 
-    /* 熱門 */
-    hotHeading: { zh: '今日熱門', en: "Today's Hot" },
+    /* 熱門（v2.1.0 復原已上線版的標題：今日熱門／最新評論） */
+    hotHeading: { zh: '今日熱門', en: "Today's hot" },
     hotSub: { zh: '按評分與評論數即時排序——最多人推薦的先上場。', en: 'Ranked live by ratings and review counts — the most-loved dishes first.' },
-    latestHeading: { zh: '最新評論', en: 'Latest Reviews' },
+    latestHeading: { zh: '最新評論', en: 'Latest reviews' },
     latestSub: { zh: '必食、普通還是避雷，由同學的評價說了算。', en: 'Must-eat, OK or avoid — students have the final say.' },
     sampleTag: { zh: '範例', en: 'Sample' },
 
     /* 避雷榜 */
-    avoidHeading: { zh: '避雷排行榜', en: 'Avoid List' },
-    avoidSub: { zh: '真實數據告訴你哪些不宜輕試——避雷率由同學一票一票投出來。', en: 'Real data on what to skip — the avoid rate is voted one review at a time.' },
-    avoidNote: { zh: '排行以「避雷」評價佔該菜品總評論的比例計算，只統計有 2 則或以上評論的菜品。', en: 'Ranked by the share of “avoid” votes per dish; only dishes with 2+ reviews count.' },
+    avoidHeading: { zh: '避雷榜', en: 'The avoid list' },
+    avoidSub: { zh: '哪些菜，同學叫你不要試。', en: 'What students told you to skip.' },
+    avoidNote: { zh: '以「避雷」票佔該菜總評論的比例排序，只算有 2 則或以上評論的菜。', en: 'Ranked by the share of “avoid” votes per dish; only dishes with 2+ reviews count.' },
     avoidPctOf: { zh: '避雷票佔比', en: 'avoid votes' },
 
     /* 隨機器 */
     randomTitle: { zh: '今天吃什麼？', en: 'What to eat today?' },
-    randomSub: { zh: '選好範圍與時段，按下按鈕，交給命運。', en: 'Pick a scope and a meal, hit the button, leave it to fate.' },
+    randomSub: { zh: '選範圍與時段，按下去交給命運。', en: 'Pick a scope and a meal. Then let go.' },
     randomScopeLabel: { zh: '範圍', en: 'Scope' },
     randomMealLabel: { zh: '時段', en: 'Meal' },
-    randomScopeAll: { zh: '食堂', en: 'All canteens' },
-    randomRoll: { zh: '開始！', en: 'Roll!' },
-    randomRolling: { zh: '選擇中…', en: 'Rolling…' },
-    randomAgain: { zh: '再來一次', en: 'Roll again' },
-    randomView: { zh: '查看這道菜', en: 'View this dish' },
+    randomScopeAll: { zh: '全部食堂', en: 'All canteens' },
+    randomRoll: { zh: '抽一道', en: 'Draw one' },
+    randomRolling: { zh: '抽緊…', en: 'Drawing…' },
+    randomAgain: { zh: '再抽一次', en: 'Draw again' },
+    randomView: { zh: '看這道菜', en: 'View this dish' },
     randomPick: { zh: '今日之選', en: "TODAY'S PICK" },
     randomPool: { zh: '可抽 {n} 道菜', en: '{n} dishes in the draw' },
-    randomPoolEmpty: { zh: '沒有可抽的菜——黑名單可能把全部菜品都排除了。', en: 'Nothing to draw — the blacklist may have excluded every dish.' },
+    randomPoolEmpty: { zh: '沒甚麼可抽——黑名單可能把全部都排除了。', en: 'Nothing to draw — the blacklist may have excluded every dish.' },
 
-    /* 餐段（早餐／午餐／晚餐）：食堂頁分類 chips 的上層。
+    /* 餐段（早餐／午餐／下午茶／晚餐）：食堂頁分類 chips 的上層。
        全日 = 不按餐段篩選（跟下面 chips 的「全部」是兩件事）。 */
     mealLabel: { zh: '餐段', en: 'Meal' },
     mealAll: { zh: '全日', en: 'All day' },
     mealBreakfast: { zh: '早餐', en: 'Breakfast' },
     mealLunch: { zh: '午餐', en: 'Lunch' },
+    mealTea: { zh: '下午茶', en: 'Tea' },
     mealDinner: { zh: '晚餐', en: 'Dinner' },
 
     /* 飯堂頁 */
@@ -74,8 +108,9 @@
     sortPopular: { zh: '最多評論', en: 'Most reviewed' },
     sortRating: { zh: '最高評分', en: 'Top rated' },
     sortPriceAsc: { zh: '價錢由低至高', en: 'Price: low first' },
-    noResult: { zh: '這個分類暫時沒有菜品。', en: 'No dishes in this category yet.' },
-    noReviewsYet: { zh: '還沒有評論——成為第一個說真話的人。', en: 'No reviews yet — be the first to tell the truth.' },
+    noResult: { zh: '這個分類暫時沒有菜。', en: 'No dishes in this category yet.' },
+    noMenuYet: { zh: '這個食堂的菜單還未收錄——官方目前只出 PDF／圖片菜單，待補。', en: 'This canteen’s menu is not listed yet — only a PDF/image menu is published so far.' },
+    noReviewsYet: { zh: '還沒有評論——做第一個講真話的人。', en: 'No reviews yet — be the first to tell the truth.' },
 
     /* 判定 */
     verdictMust: { zh: '必食', en: 'MUST EAT' },
@@ -84,29 +119,32 @@
 
     /* 評論表單 */
     formTitle: { zh: '寫評論', en: 'Write a review' },
-    formSub: { zh: '你的一句話，幫助整個校園吃得更好。', en: 'Your one line helps the whole campus eat better.' },
+    formSub: { zh: '一句話就夠，整個校園都受惠。', en: 'One line is enough — the whole campus eats better for it.' },
     formStars: { zh: '你的評分', en: 'Your rating' },
     formVerdict: { zh: '你的判定', en: 'Your verdict' },
     formNickname: { zh: '暱稱（可留空＝匿名同學）', en: 'Nickname (leave blank to stay anonymous)' },
     formNicknamePlaceholder: { zh: '匿名同學', en: 'Anonymous student' },
     formText: { zh: '食後感（可留空）', en: 'Your review (optional)' },
     formTextPlaceholder: {
-      zh: '份量、味道、等待時間、是否划算……留空也可以，只給星級一樣算數。',
+      zh: '份量、味道、等幾久、抵不抵……留空也可以，只給星一樣算數。',
       en: 'Portion, taste, wait time, value… or leave it blank — a rating alone still counts.',
     },
-    formSubmit: { zh: '刊登評論', en: 'Post review' },
+    formSubmit: { zh: '刊登', en: 'Post' },
     formSubmitting: { zh: '刊登中…', en: 'Posting…' },
-    formHint: { zh: '評論會立即公開顯示；範例評論可一鍵隱藏。', en: 'Reviews go live instantly; sample reviews can be hidden anytime.' },
-    errNeedRating: { zh: '請先選擇星級評分。', en: 'Please tap a star rating first.' },
+    formHint: { zh: '評論會即時公開；範例評論可一鍵隱藏。', en: 'Reviews go live instantly; sample reviews can be hidden anytime.' },
+    errNeedRating: { zh: '先選個星級。', en: 'Pick a star rating first.' },
     errNeedText: { zh: '請至少寫幾個字再發佈。', en: 'Write at least a few words before posting.' },
-    errNetwork: { zh: '評論傳送失敗，請再試一次。', en: 'Could not post the review, please try again.' },
-    formThanks: { zh: '已刊登！謝謝你的分享。', en: 'Posted — thanks for feeding the campus.' },
+    errNetwork: { zh: '送不出去，請再試一次。', en: 'Could not post the review, please try again.' },
+    formThanks: { zh: '已刊登，多謝你。', en: 'Posted — thanks for feeding the campus.' },
 
-    /* 一鍵評分：不用打字也能投一票 */
-    quickTitle: { zh: '一鍵評分', en: 'One-tap rating' },
-    quickNote: { zh: '不用寫字，按一下就算一票。', en: 'No typing needed — one tap counts as a vote.' },
+    /* 快速評分：兩步 —— 先揀，再確認。第一步只是選取，按「確認送出」才真的記錄 */
+    quickTitle: { zh: '快速評分', en: 'Quick rating' },
+    quickNote: { zh: '先揀一個，再按「確認送出」才算數。', en: 'Pick one, then tap Confirm — nothing is saved until you do.' },
     quickStars: { zh: '{n} 星', en: '{n}★' },
-    quickDone: { zh: '已記下你的一票！', en: 'Your vote is in!' },
+    quickConfirmMsg: { zh: '已選「{v}」，確定送出？', en: 'You picked “{v}” — send it?' },
+    quickConfirm: { zh: '確認送出', en: 'Confirm' },
+    quickCancel: { zh: '取消', en: 'Cancel' },
+    quickDone: { zh: '記低咗你嗰票！', en: 'Your vote is in!' },
 
     /* 預設標籤：給不想打字的人一組現成說法 */
     formTags: { zh: '快速標籤（可選，可多選）', en: 'Quick tags (optional, pick any)' },
@@ -123,29 +161,29 @@
 
     /* 頁尾 */
     footerTagline: {
-      zh: '城大覓食，由 Eaty 開始。食堂的菜單、評價與避雷情報，一目了然。',
-      en: 'CityU eating starts with Eaty — menus, reviews and avoid-list intel for every canteen, at a glance.',
+      zh: '香港校園覓食，由 Eaty 開始。兩間大學的食堂、價錢與避雷情報。',
+      en: 'Hong Kong campus eating starts with Eaty — canteens, prices and avoid-lists across CityU and HKU.',
     },
     footerNote: {
-      zh: '學生自製網站，非官方，與香港城市大學無從屬關係。菜單最後更新：2026-10-23（AC1 抄錄自官方點餐站，AC2 現場菜單整理、三個檔口（含四季茶坊飲品）抄錄自官方點餐平台，AC3 抄錄自官方點餐平台，CMC Cafe 與 5380 Cafe 抄錄自現場菜單牌）；價錢以食堂現場為準。',
-      en: 'A student-built, unofficial site, not affiliated with CityU. Menu last updated 2026-10-23 (AC1 from the official ordering site; AC2 from the on-site menu boards, with three stalls — including the tea house drinks — from the official ordering platform; AC3 from the official ordering platform; CMC Cafe and 5380 Cafe from the on-site menu boards); prices at the counter apply.',
+      zh: '學生自製網站，非官方，與各院校無從屬關係。菜單抄錄自各校官方餐飲頁及餐廳菜單（2026-10）；價錢以食堂現場為準。',
+      en: 'A student-built, unofficial site, not affiliated with any institution. Menus transcribed from official catering pages and outlet menus (Oct 2026); prices at the counter apply.',
     },
     footerPhotoNote: {
-      zh: '部分圖片取自網上圖庫，僅供參考，非實際商品照。',
-      en: 'Some photos are sourced from online stock libraries and are for reference only — not actual product shots.',
+      zh: '食堂照片為實際場地照（部分取自 Wikimedia Commons，CC 授權）；部分菜品照片沿用同分類圖片，僅供參考，非實際商品照。',
+      en: 'Canteen photos show the actual venues (some from Wikimedia Commons under CC licences); some dish photos are shared within a category and are for reference only — not actual product shots.',
     },
     footerCoverageNote: {
       zh: '本站菜單為人手整理，並非食堂全部菜品，未涵蓋所有檔口、期間限定與每日供應的菜式。菜式、價錢與供應時間或有變動，一律以食堂現場為準。',
       en: 'This menu is hand-copied and is not exhaustive — it does not cover every stall, limited-time item, or daily special. Dishes, prices and availability may change; the canteen counter always takes precedence.',
     },
     footerUpdated: {
-      zh: '最後更新 2026-10-23',
-      en: 'Last updated 2026-10-23',
+      zh: '最後更新 2026-11-01',
+      en: 'Last updated 2026-11-01',
     },
     footerSamplesHidden: { zh: '隱藏範例評論', en: 'Hide sample reviews' },
     footerSamplesShown: { zh: '顯示範例評論', en: 'Show sample reviews' },
     footerStorageLocal: { zh: '評論暫存於你的瀏覽器', en: 'Reviews stored in your browser' },
-    footerStorageCloud: { zh: '評論已雲端共享（Supabase）', en: 'Reviews shared via Supabase' },
+    footerStorageCloud: { zh: '評論已雲端共享', en: 'Reviews shared in the cloud' },
     footerOfficial: { zh: '官方餐廳資訊', en: 'Official catering info' },
     footerFeedback: { zh: '意見回饋 / 補充菜單', en: 'Feedback / add a dish' },
 
@@ -175,9 +213,13 @@
       if (!entry) return key;
       return entry[current] || entry.zh || key;
     },
+    /* 取名：目前語言優先；該語言是空字串（不是 null）時也要退回另一種語言，
+       否則資料裡 en='' 的菜在英文模式下會變成一整行空白。 */
     pick(obj) {
       if (!obj) return '';
-      return current === 'en' ? (obj.en ?? obj.zh ?? '') : (obj.zh ?? obj.en ?? '');
+      const a = current === 'en' ? obj.en : obj.zh;
+      const b = current === 'en' ? obj.zh : obj.en;
+      return String(a || b || '').trim();
     },
     lang() { return current; },
     set(lang) {

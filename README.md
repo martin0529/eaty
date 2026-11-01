@@ -1,251 +1,324 @@
-# Eaty. — 城大搵食指南 · CityU Canteen Guide
+# Eaty — 香港校園食堂指南 · HK Campus Canteen Guide（多大學版本）
 
-一個為香港城市大學（CityU HK）而寫的飯堂菜單與評價指南。收錄 **5 間食堂**（AC1 城大食坊、AC2 Canteen、AC3 Bistro、CMC Cafe、5380 Cafe）共 **452 道菜**，可以按 **餐段（早餐／午餐／晚餐）** 與菜品分類篩選，看每一道菜的價錢、照片與同學的真實評價，還有「今天吃什麼」隨機抽籤。
+> **v2.0.0 起已與單校版合併**：這個目錄就是唯一的正式版本。
+> 菜單、分類、食堂、大學清單與評論全部放在 Supabase，本地 `js/data/*.js` 只作離線後備。
+>
+> **關於名字**：v1.4.0 一度改叫 **Mess**（mess hall 的食堂本義），v2.1.0 **改回原來的 Eaty** ——
+> 這個名字用了整個 M3，對外累積的認知不該中途換掉。
 
-純靜態網站：**沒有建置步驟、沒有框架、沒有 `npm install`**——打開 `index.html` 就能跑。
+收錄香港各間大學的食堂菜單與評價，目前有 **香港城市大學（CityU）** 與 **香港大學（HKU）**。
+導覽是三層的：**首頁選大學 → 該校食堂列表 → 食堂菜單**。
 
-A static, build-free menu & review guide for the CityU HK canteens. No framework, no bundler, no dependencies to install — just open `index.html`.
+> ✅ **資料狀態**（2026-10-31 · v2.1.0）：
+> **全部是真實菜單，站上沒有任何虛構資料。** CityU 5 間食堂（486 道，AC1 為官方完整菜單）；
+> HKU 2 間食堂（297 道，CYM 與黃克競，抄錄自官方點餐系統 `now.order.place`／Aigens 平台，
+> 中英雙語、價錢與相片都來自官方 API）。
+> 示範用的 **PolyU（48 道）與 HKBU（1,689 道）已移出打包範圍**，檔案封存在 `js/data/archive/`。
+
+純靜態網站：**沒有建置步驟、沒有框架、沒有 `npm install`**——打開 `index.html` 就能跑，離線也完全可用。
+
+### 主要功能
+
+**v2.1.2：HKU 的餐段標記補回雲端**
+
+- HKU 兩個食堂（CYM 156 道、黃克競 141 道）**看不到「早餐／午餐／下午茶／晚餐」頁籤**，
+  原因是 `categories.meal` 在 Supabase 裡 60 個分類全部是空的——本地 `js/data/hku.js` 一直有標，
+  但上線讀雲端，空值就把整條餐段頁籤吃掉了。
+- 已把 60 個分類的餐段寫回資料庫（`meal` 用逗號分隔，可跨段，例如「小食」＝ 下午茶、
+  「單售產品」＝ 全日）。現在兩間食堂都是五個頁籤：全日／早餐／午餐／下午茶／晚餐。
+
+**v2.1.1：補齊 133 道菜的英文名**
+
+- 英文模式下的避雷榜有幾行只剩「AC3 · $46」，菜名是空的——因為這批菜（AC1 8 道、AC3 125 道）
+  在資料庫裡的 `en` 是空字串。**已全部補上正式英文名**，`select count(*) from dishes where trim(en)=''` 現在是 0。
+- 前端也加了兩層防護：`I18N.pick()` 遇到**空字串**（不只是 null）會退回另一種語言；
+  避雷榜與菜品卡的副名改成「只印另一種語言」，相同或空白就不印——否則英文模式下會把同一個英文名印兩次。
+
+**v2.1.0：品牌回歸、真實場地照、導覽復原**
+
+- **品牌改回 Eaty**：頁首、hero、頁尾、`<title>` 全部復原；內部識別碼（`EATY_*`、`eaty:*`）本來就沒換過。
+- **食堂卡換真實場地照**：AC1／AC2／AC3／CYM／黃克競改用自己的食堂內部照（部分來自 Wikimedia Commons，
+  CC 授權；CYM 與黃克競另有 HKU 餐飲處的官方介紹頁作對照）。**5380 Cafe 找不到可用的場地照 → 留白**，
+  前端自動用校色文字佔位，不拿不相關的食物照充數。
+- **hero 那碗飯改成該校主打菜自己的照片**：以前不管哪間學校都放同一張 `assets/v7/hero-bowl.jpg`，
+  HKU 的燒味雙拼飯因此配了一碗牛腩麵。CityU 的主打菜同時換成「麻辣肉丁 ‧ 醬油雞髀飯」
+  （`ac1-roast-recommend-dish-4`）—— 原本用的鴨腿湯河粉照片是印滿大字的海報圖，
+  放大成圓形主圖時字比食物搶眼；換過一次分類橫幅後仍與菜名對不上，最後改用這道菜自己的官方照片。
+- **首頁說明改成收錄數字**：「全站已收錄 2 間大學、7 間食堂、749 道菜；菜單抄錄自官方點餐平台與現場菜牌。」
+  數字直接寫進句子（舊版另起一行寫同一組數字，等於講兩次）。
+- **導覽復原並加一項**：食堂／**今日熱門**／避雷榜／最新評論。這間學校還沒有評論時，
+  今日熱門與避雷榜會自動變灰（HKU 目前就是 0 則）。
+- **大學切換器加了滑動指示器**：墨黑膠囊從舊鈕滑到新鈕（420ms `--ease-settle`），
+  不再是「兩顆按鈕同時換色」；不重建 DOM，所以動畫不會被路由切換打斷。
+
+**v2.0.0：與單校版合併**
+
+- **Supabase 成為唯一真相**：`universities / canteens / categories / dishes / roll_blacklist` 全部放資料庫，
+  啟動時抓一次；抓不到（離線／RLS／逾時）就整批退回本地 `js/data/*.js`，不會出現半殘畫面。
+- **評論改成全校／跨校共享**：從 localStorage 改為寫入 Supabase `reviews` 表，M3 的 152 則真實評論延續使用。
+- **資料庫加入大學維度**：`canteens / categories / dishes` 多了 `uni` 欄，另建 `universities` 表。
+- **範圍收斂為 CityU ＋ HKU**；PolyU／HKBU 移出（見下面「已封存的示範資料」）。
+
+**資料層（v1.5.0）**
+
+- **HKU 真實菜單**：CYM 食堂（26 分類／156 道）與黃克競食堂（34 分類／141 道）來自官方點餐系統
+  `now.order.place`（Aigens 平台），中英雙語、真實價錢、真實相片。
+- **官方點餐入口**：這兩間食堂的食堂卡與分類標題列有「官方網上點餐 ↗」膠囊，直接連到官方點餐頁。
+- **招牌標籤**：`signature` 只給官方 `soldQty` 各食堂前 3 名（飲品不計），不是憑感覺挑的。
+
+<details>
+<summary>怎麼再抓一間食堂（點開看）</summary>
+
+```bash
+# 1. 菜單（locale=default 中文、locale=en 英文；後者是真英文菜名）
+curl -s "https://aigensstoreapp.appspot.com/api/v1/menu/store/<storeId>.json?locale=default&open=true&menu=prekiosk&groupId=1000&country=hk" -o menu_zh.json
+curl -s "https://aigensstoreapp.appspot.com/api/v1/menu/store/<storeId>.json?locale=en&open=true&menu=prekiosk&groupId=1000&country=hk" -o menu_en.json
+```
+
+- `now.order.place` 前端頁面有 Cloudflare，**直接爬會 403**；但上面這支 API 沒有，可以直接 curl。
+- **Aigens 的模型**：`category → groupIds[] → groups[] → items[]`。
+  **每個分類的第一個 group 才是菜品**，其餘 group 是「配碼／餐飲品／堂食外賣」等選項群組，不能收。
+- 「外賣包裝」「其他」（餐具、餐盒）不匯入；重複分類只收一組。
+- 圖片：`storage.googleapis.com`、`lh3.googleusercontent.com` 正常；`content.aigens.com` **部分 hash 已 404**，要逐條測。
+- 詳見 `handover/updates/2026-10-23-eaty-multi-v1.5.0.md`。
+
+</details>
+
+**設計層**
+
+- **品牌**：站名 **Eaty**（v2.1.0 起；v1.4.0～v2.0.0 曾叫 **Mess**）。
+- **去掉眉題**：原本每個區塊都是「英文小眉題 ＋ 大標題 ＋ 副標」三層，掃視要跨三個層級；
+  現在標題自己承重，副標只補一句話。全站 `.kicker` 已清零，勿再加回。
+- **校色識別系統**：四間大學各一個識別色，只出現在「你正在看哪所學校」的地方 ——
+  頁首品牌圓點、麵包屑校名、大學卡膠囊與標語、食堂卡 hover 邊框、hero 大色塊。
+  首頁（未選校）維持品牌紅 `#CE2F1F`，不帶任何校色。
+- **動效**：路由切換用 View Transitions（舊畫面 260ms 向上淡出、新畫面 420ms 淡入）、
+  首頁統計數字從 0 滾上去、大學卡隨指標微傾斜（≤5°）、校園照以 `clip-path` 擦開。
+  全部走 `transform / opacity / clip-path`，並尊重 `prefers-reduced-motion`。
+
+**功能層**
+
+- **三層導覽**：首頁 4 張大學卡（16:9 校園照、校名疊在照片上、食堂數／菜品數、測試資料標記）→
+  大學頁列出該校食堂 → 食堂頁看完整菜單。麵包屑「所有大學／校名／食堂」隨時可以往回跳。
+- **食堂地圖**：每間食堂都有菜單、價錢、現場照片，以及「官方網上點餐」入口。
+- **餐段 × 分類篩選**：早餐／午餐／下午茶／晚餐，再按分類細分；可依「最多評論／最高評分／價錢」排序。
+- **快速評分（兩步）**：按「必食 5 星／普通 3 星／避雷 1 星」只是**選取**，畫面下方會出現
+  「已選「X」，確定送出？」與「確認送出／取消」。**再按一次確認才真的寫入** —— 誤觸不會留下錯的評分。
+- **預設標籤**：抵食、份量多、好味、太油……共 9 個現成說法，點了自動以 `#標籤` 加進食後感；
+  **食後感可以完全留空**，只給星級一樣算數（只給星級的評論會顯示「只給了評分，沒有留言」）。
+- **避雷榜**：按「避雷票 ÷ 總評論」排名，並標出樣本數——3 則 100% 跟 30 則 100% 是兩件事。
+- **今天吃什麼**：「範圍 × 時段」隨機抽一道菜；飲品甜品自動排除在抽籤池外，只抽目前這間大學的菜。
+- **深連結**：`#/u/hku` 直接開某校食堂列表；舊的 `#/canteen/<id>` 連結會自動切到該食堂所屬大學。
 
 ---
 
-## 功能 Features
+## 與單校版的分別
 
-| | |
-|---|---|
-| 🍜 **菜單瀏覽** | 452 道菜 / 81 個分類，可按食堂與菜品分類篩選；AC2 部分檔口可直接跳官方點餐 |
-| 🥙 **第 5 間食堂** | **5380 Cafe**（康樂樓 5 樓 R5013，Ebeneezer's 中東菜）8 個分類／55 道，49 道上架；菜牌上 6 道貼了 SOLD OUT 的一併記下（`available=false`，前端自動隱藏） |
-| 🧋 **官方商品照** | AC2「四季茶坊」**47 道在售飲品全部採用點餐站的真實商品照**（600×600），名稱、價錢與官方菜單逐項對齊；官方已下架的 2 道自動隱藏 |
-| 🛒 **點餐入口** | 食堂頁標題區就有入口：食堂有點餐站顯示「官方網上點餐」，只有檔口有（AC2）則列成「檔口點餐　西北麵館 ↗　餃餃陣 ↗」 |
-| 🕗 **餐段切換** | 食堂頁最上層是「全日／早餐／午餐／晚餐」，切換後分類與菜品一起收窄 |
-| ⭐ **真實評價** | 1–5 星 + 必食／普通／避雷三種評價，寫入 Supabase（全校共享） |
-| ⚡ **一鍵評分** | 菜品彈窗內一按「必食／普通／避雷」即完成投票（自動對應 5／3／1 星），**完全不用打字** |
-| 🏷️ **預設標籤** | 食後感提供 9 個現成標籤（抵食／份量多／好味／中規中矩／太油／份量少／唔好味／冇味／唔抵食），點一下即以 `#標籤` 插入；食後感亦可留空 |
-| 📊 **榜單評論數** | 熱門菜與避雷榜都標明每道菜的評論則數，避雷率旁邊一樣看得到樣本量 |
-| 🎲 **今天吃什麼** | 隨機抽籤；**可選食堂範圍 ＋ 時段（全日／早餐／午餐／晚餐）**；排除清單存在 Supabase，隨時自己改，十秒內有答案 |
-| 🌏 **中英雙語** | 一鍵切換繁體中文 / English |
-| 📱 **響應式** | 手機、平板、寬螢幕皆可用 |
-| ✨ **動效** | 純 CSS 關鍵影格驅動，`transform` / `opacity` / `clip-path`，尊重 `prefers-reduced-motion` |
+v2.0.0 起**兩邊已合併**：本目錄是唯一正式版本；`eaty/`（單校版）保留作歷史對照，不再更新。
+
+| | 合併前 | v2.0.0 |
+|---|---|---|
+| 資料來源 | 單校版走 Supabase、多校版走本地 JS | **Supabase 唯一真相**，本地為後備 |
+| 評論 | 單校版共享、多校版各自本機 | **全部寫入 Supabase**，跨校共享 |
+| 導覽 | 單校版首頁直接列食堂 | **三層**：選大學 → 選食堂 → 菜單 |
+| 餐段 | 早／午／晚 | 早／午／**下午茶**／晚 |
+
+> 合併的界線：**資料層與評論層取自單校版，介面與路由取自多校版**。
 
 ---
 
-## 專案結構 Project structure
+## 目錄結構
 
 ```
-.
-├── index.html              # 唯一入口
+eaty-multi/
+├── index.html              # 唯一入口；底部依序載入 config → data/* → menu-data → i18n → reviews → app
 ├── css/
 │   └── style.css           # 全部樣式 + 動效（單檔）
 ├── js/
-│   ├── config.js           # 站點設定：版本、Supabase 連線、儲存鍵名
-│   ├── menu-data.js        # 內建菜單後備資料 + 雲端載入器（含餐段與抽籤黑名單）
-│   ├── i18n.js             # 中英雙語文案表
-│   ├── reviews.js          # 評論儲存層（Supabase / localStorage 雙實作）
+│   ├── config.js           # 站點設定：版本、localStorage 鍵、開關
+│   ├── data/
+│   │   ├── universities.js # 大學清單（CityU / PolyU / HKBU / HKU）
+│   │   ├── cityu.js        # CityU 的食堂／分類／菜品
+│   │   ├── polyu.js        # PolyU（⚠️ 測試資料：虛構菜單）
+│   │   ├── hkbu.js         # HKBU 的食堂／分類／菜品（爬蟲生成）
+│   │   ├── hku.js          # HKU（⚠️ 測試資料：虛構菜單）
+│   │   └── index.js        # 彙整成 window.EATY_DATA，並定義抽籤黑名單
+│   ├── menu-data.js        # 本地載入器：依「目前大學」過濾出作用中的菜單
+│   ├── i18n.js             # 中英雙語文案
+│   ├── reviews.js          # 評論儲存層（純 localStorage）
 │   └── app.js              # 渲染與互動主邏輯
-├── assets/                 # 菜品與版面照片
-└── supabase/               # 資料庫設定（見下）
+├── assets/                 # 菜品照片（新校暫用既有圖庫照片）
+│   └── uni/                # 首頁大學卡照片：cityu / polyu / hkbu / hku .jpg（16:9，1200×675）
+└── .crawl/                 # 爬蟲暫存（**不進 git**）：原始 JSON、爬蟲與生成腳本
 ```
 
 ---
 
-## 資料來源 Data source
+## 路由
 
-菜單與評論採**三層後備**，由上而下依序嘗試：
-
-1. **Supabase 雲端**（唯一真相來源）
-2. **`localStorage` 快取**（曾成功載入過就有）
-3. **`js/menu-data.js` 內建資料**（最後防線，即使離線網站也不會空白）
-
-實際走了哪一層可以在瀏覽器 console 看 `window.CityuEatsMenu.source`，值為 `'cloud'` / `'cache'` / `'bundled'`。
-
-> ⚠️ 所以**使用者看到的菜名、價錢、食堂介紹幾乎都來自雲端**。只改 `menu-data.js` 不會反映到線上網站，要改文案請改 Supabase 的資料表。
-
----
-
-## 資料庫設定 Database setup
-
-需要一個免費的 [Supabase](https://supabase.com) 專案。到 **SQL Editor** 執行：
-
-```
-supabase/setup.sql                    ← 完整設定，從零可跑（建表 + 權限 + 種子資料）
-```
-
-之後按日期順序跑增量（全部可重複執行）：
-
-```
-supabase/ac1-breakfast-2026-10-05.sql        ← AC1 早餐菜單同步
-supabase/ac1-lunch-2026-10-05.sql            ← AC1 午市菜單同步
-supabase/ac2-menu-2026-10-12.sql             ← AC2 按現場檔口重建菜單
-supabase/ac3-menu-2026-10-12.sql             ← AC3 上線（爬自官方點餐平台）
-supabase/teahouse-2026-10-12.sql             ← AC2 四季茶坊 + 全站補圖
-supabase/ac3-snacks-photo-fix-2026-10-12.sql ← 修 AC3「小食」7 張相同佔位圖
-supabase/canteen-contact-2026-10-12.sql      ← 食堂簡介改「電話 + 付款方式」
-supabase/ac2-stalls-cmc-2026-10-14.sql       ← AC2 兩個檔口官方菜單 + 拾味 + 新食堂 CMC Cafe
-supabase/2026-10-15-ac2-teahouse-drinks.sql  ← AC2 四季茶坊飲品同步官方點餐站（24 → 49 道）
-supabase/2026-10-20-ac2-teahouse-resync.sql  ← AC2 四季茶坊重新同步（47 道在售、2 道下架）
-supabase/2026-10-20-clear-teahouse-order-url.sql ← 移除四季茶坊的點餐連結（它沒有獨立點餐平台）
-supabase/2026-10-23-5380-cafe.sql            ← 新食堂 5380 Cafe（8 分類／55 道）
-supabase/2026-10-23-canteen-alias.sql        ← `canteens.alias`（食堂卡小字：5380 → AC1、CMC → CMC）
-```
-
-跑完會建立 5 張表並灌入資料。下表是**跑完全部增量之後**的現況：
-
-| 表 | 內容 |
-|---|---|
-| `canteens` | 5 間食堂（`order_url` 放大食堂的官方下單連結；`alias` 是食堂卡名旁邊那行小字，可空） |
-| `categories` | 81 個被用到的菜品分類（含 `meal` 餐段欄位、`order_url` 檔口下單連結） |
-| `dishes` | 452 道上架菜（DB 內另有 34 道下架留存） |
-| `reviews` | 使用者評論（初始為空） |
-| `roll_blacklist` | 「今天吃什麼」抽籤排除清單 |
-
-`setup.sql` 與每個增量檔都**可重複執行**，不會弄壞既有資料。
-
-然後把 **Project Settings → API Keys** 的兩個值填進 `js/config.js`：
-
-```js
-SUPABASE_URL: 'https://<你的專案>.supabase.co',
-SUPABASE_ANON_KEY: 'sb_publishable_...',
-```
-
-> 🔒 **只能放 `sb_publishable_` / `anon` 這把公開金鑰。** 它會隨網頁送到每一位訪客的瀏覽器，安全性完全由資料庫的 RLS（Row Level Security）政策把關——本專案的 RLS 政策只給匿名使用者 `select` 權限。
->
-> **絕對不要把 `sb_secret_` 或 `service_role` 放進來**，那等於把整座資料庫的讀寫權公開在網頁原始碼裡。
-
-### 其他 SQL
-
-| 檔案 | 用途 |
-|---|---|
-| `supabase/setup.sql` | 完整設定，**一般情況只需要這一個** |
-| `supabase/ac2-stalls-cmc-2026-10-14.sql` | AC2 餃餃陣／西北麵館同步官方點餐菜單 + 兩個檔口下單連結 + 新增「拾味 The Pick」+ 新食堂 CMC Cafe |
-| `supabase/2026-10-15-ac2-teahouse-drinks.sql` | AC2「四季茶坊」飲品同步官方點餐站：24 → **49 道**（補 23 道基本熱／凍飲 + 汽水 + 紅牛，換 47 張官方商品照，價錢校正） |
-| `supabase/2026-10-20-ac2-teahouse-resync.sql` | AC2「四季茶坊」**重新同步**（v0.12.0）：47 道在售飲品逐項對齊官方名／英文名／價錢／商品照；官方已下架的「芝士荔枝梔香檸檬茶」「抹茶奶茶」改 `available = false`；舊種子重複的「凍檸檬茶 $9」（官方 $7.5）下架 |
-| `supabase/2026-10-20-clear-teahouse-order-url.sql` | 移除「四季茶坊」分類的 `order_url`（v0.13.2）。四季茶坊**沒有獨立點餐平台**，store 312882 是西北麵館的店 |
-| `supabase/2026-10-23-5380-cafe.sql` | 新食堂「5380 Cafe」（v0.14.0）：康樂樓 5 樓 R5013，Ebeneezer's 中東菜，8 個分類／55 道（49 道上架，6 道菜牌貼了 SOLD OUT）。飲品分類同步加入抽籤黑名單 |
-| `supabase/2026-10-23-canteen-alias.sql` | `canteens.alias` 新欄位（v0.14.1）：食堂卡名旁邊那行小字可自訂。5380 Cafe → **AC1**（它在康樂樓）、CMCAFE → **CMC**；留空則沿用原本「顯示另一語言名稱」的規則 |
-| `supabase/ac3-snacks-photo-fix-2026-10-12.sql` | 修 AC3「小食」7 張相同佔位圖（原本 7 道菜共用同一張卡通圖 → 前端顯示空白卡） |
-| `supabase/canteen-contact-2026-10-12.sql` | 食堂簡介改為「電話 + 付款方式」（來源：CityU 官方餐飲目錄） |
-| `supabase/v0.6.0-meal-and-blacklist.sql` | v0.6.0 增量遷移（餐段欄位 + 抽籤黑名單）。內容已包含在 `setup.sql` 的 Part 4，舊專案才需要單獨跑 |
-| `supabase/fix-fact-zh.sql` | 一次性資料修正（歷史遺留，新專案不需要跑） |
-| `supabase/reference/*.sql` | 建置 `setup.sql` 所用的原始片段，**僅供參考、不要直接執行**——它們假設表已存在，在全新專案會報錯 |
-
----
-
-## 兩個設定放在資料庫裡（改資料，不用改程式）
-
-### 1. 餐段：`categories.meal`
-
-每一列填**逗號分隔**的餐段代碼，存檔即生效（網站重新整理即可）：
-
-| 填什麼 | 意思 |
-|---|---|
-| `breakfast` | 只在早餐出現 |
-| `lunch,dinner` | 午餐、晚餐都出現 |
-| `breakfast,lunch,dinner`（或 `all`） | 三餐都出現 |
-| **留空（NULL）** | **不分餐**：只在「全日」出現，三個餐段都不算它 |
-
-也接受中文別名（`早餐` / `午餐` / `晚餐` / `三餐`）與全角逗號。
-
-> 設計成「可以跨餐共用」是因為同一道菜常常午晚都賣；而「留空 = 不分餐」（而不是「= 三餐都算」）
-> 讓 `其他`（$1 環保餐盒／餐具那種根本不是餐點的品項）不會滲進早餐清單。
->
-> 某個食堂如果**完全沒有**某個餐段的菜，那一顆 tab 會自動不出現，不會留一顆按下去空空如也的按鈕。
-
-### 2. 抽籤排除清單：`roll_blacklist`
-
-一行 = 一個排除項。網站**只讀**這張表（RLS 只開 `select`），所以任何人都無法透過網站清空抽籤池。
-
-| `kind` | `value` 填什麼 | 例子 |
+| Hash | 畫面 | 由誰渲染 |
 |---|---|---|
-| `category` | `categories.id` | `飲品`、`Coffee Lounge`、`drinks` |
-| `dish` | `dishes.id` | `ac1-pepperoni`、`ac2-claypot` |
+| `#/` | 首頁：選大學（4 張大學卡） | `renderHome()` |
+| `#/u/<uniId>` | 該校食堂列表 ＋ 熱門／避雷／最新評論 | `renderUniversity()` |
+| `#/canteen/<canteenId>` | 食堂菜單 | `renderCanteen()` |
 
-「今天吃什麼」的視窗裡會顯示**可抽 N 道菜**，那就是「範圍 × 時段」再扣掉排除清單之後的實際池子大小
-（2026-10-23 實測：全部 452 道上架菜 − 156 道飲品與非食品 = **296 道**；
-分食堂為 AC1 109／AC2 51／AC3 74／CMC 18／**5380 44**。視窗可再按**時段**收窄，
-某時段在該範圍內一道菜都沒有時，那顆 chip 會變灰禁用 —— 例如 AC2 冇早餐）。
-把整張表刪光 = 不再排除任何東西。
+- 不認得的大學代號（`#/u/nope`）→ 退回 `#/`。
+- 舊連結 `#/canteen/<id>` 冷開時，若該食堂屬於另一間大學，會自動 `setUniversity()` 再畫。
 
-### 3. 檔口下單連結：`categories.order_url`
+---
 
-大食堂的官方下單連結放在 `canteens.order_url`；**檔口**（在網站上就是一個分類）沒有對應的
-`canteens` 列，所以改用 `categories.order_url`：
+## 多一個「大學」是怎麼運作的
 
-```sql
-update categories set order_url = 'https://csd.order.place/home/store/212882' where id = '餃餃陣';
-```
+1. **資料層**：`js/data/index.js` 把各大學的資料檔合成一份 `window.EATY_DATA`，
+   原始資料放在 `EATY_DATA.raw`（不變）。
+2. **作用中檢視**：`EATY_DATA.canteens / categories / dishes` 是「目前大學」的切片，
+   由 `EatyMenu.setUniversity(id)` 就地替換。`app.js` 只讀這三份。
+3. **導覽**：首頁大學卡與頁首 `CityU｜PolyU｜HKBU｜HKU` 切換器都會導到 `#/u/<id>`，
+   並把選擇存進 `localStorage`（`eaty:uni`）。
+4. **手機**：頁首切換器在 ≤760px 收起（四顆按鈕會把語言／隨機鈕推出畫面），
+   改由首頁的大學卡與麵包屑導航。
 
-填了就會在該分類的標題列（以及單獨選中該分類時）出現「網上點餐」按鈕；留空則不顯示。
-目前 AC2 只有 **餃餃陣**（store `212882`）與 **西北麵館**（store `312882`）兩個檔口有官方點餐店。
-**「四季茶坊」沒有獨立點餐平台**（它的飲品只是掛在西北麵館的店 `312882` 菜單下），
-所以分類的 `order_url` 必須留空 —— 填了會把客人帶去西北麵館的店。
+### 新增大學
 
-v0.10.0 起，這些檔口的點餐連結也會一併出現在**食堂頁的標題區**（時段行與評分列之間）：
-食堂自己有點餐站（AC1／AC3）就顯示「官方網上點餐」，食堂沒有但檔口有（AC2）就逐個列成
-「檔口點餐　西北麵館 ↗　餃餃陣 ↗」，兩者都沒有（CMC）整行不顯示。判斷完全是資料驅動 ——
-只要在 `categories.order_url` 填上網址，標題區就會自動多一顆膠囊，不需要改程式。
+1. **資料庫（主要途徑）**：`universities` 表加一筆；`canteens / categories / dishes` 加對應列並在 `uni` 欄填新校 id。
+   可以照 `work/gen_multi_sql.cjs` 的寫法，由 `js/data/<uni>.js` 產生 SQL 貼進 SQL Editor（HKU 的 297 道就是這樣灌的）。
+2. **校色**：`css/style.css` 的「校色」段加 `--uni-<id>` 與 `--uni-<id>-tint`，並把 `id` 加進 `js/app.js` 的 `UNI_IDS`。
+   漏了不會壞，只是該校沒有識別色（退回品牌紅）。挑色時注意：顏色要能並置分辨、明度接近、白字 ≥4.5:1。
+3. **本地後備**：新增 `js/data/<uni>.js`（`window.EATY_DATA_<UNI>`），在 `js/data/index.js` 的 `SOURCES` 加一行、
+   `index.html` 加一個 `<script>`。雲端連不上時，這個檔案就是後備畫面。
+4. **飲品分類**加進資料庫 `roll_blacklist`（`kind=category`），否則「今天吃什麼」會抽到飲品。
+5. **大學卡照片**放 `assets/uni/<uni>.jpg`（16:9，建議 1200×675）；
+   `photo` 留空也不會破圖 —— 會退回「校色漸層 ＋ 巨大幽靈短名」的無圖版本。
+6. 菜品照若暫缺，`assets/` 內既有照片可重用；`dishes[].photo` 留空會自動畫文字佔位卡。
 
-### 4. 從官方點餐站同步菜單（aigens 後端）
+**資料欄位**
 
-CityU 的檔口點餐站（`csd.order.place`）背後是 **aigens**，菜單有一支公開 JSON API：
+- `universities[]`: `{ id, short, zh, en, cityZh, cityEn, taglineZh, taglineEn, heroDishId, officialUrl, noteZh, noteEn, color, photo?, photoCredit? }`
+  - `color`：**後備欄位**。v1.4.0 起大學卡與校色元件改用 `--uni-<id>`（見 `style.css` 的校色段）；
+    若新增大學沒有在 CSS 定義 `--uni-<id>`，才會退回這裡填的 `ac1`–`ac8`
+  - `photo`（選填）：首頁大學卡照片路徑。**版面照 16:9 裁切**，主體建議放中間偏上
+  - `photoCredit`（選填）：照片出處／授權，只作記錄，不上畫面
+  - `noteZh` 含「測試資料」字樣時，該校大學卡會自動掛上「測試資料」標籤
+- `canteens`: `{ id, uni, short, zh, en, campusZh, campusEn, bldgZh, bldgEn, hoursZh, hoursEn, factZh, factEn, color, photo?, orderUrl?, alias? }`
+  - `color` 可填 `ac1`–`ac8`
+  - `orderUrl`（選填）：食堂自己的官方點餐站 → 卡片下方多一顆「官方網上點餐」膠囊
+  - `alias`（選填）：食堂卡名字旁邊的小字。留空時自動用「另一語言名稱 → 短名 → 校園名」，
+    三者都與主名相同就整塊不顯示，避免「Harmony Lounge / Harmony Lounge」這種自我重複
+- `categories`: `{ id, uni, zh, en?, meal, orderUrl? }`
+  - `meal`：逗號分隔 `breakfast / lunch / tea / dinner`；**留空＝不分餐**（只在「全日」出現）
+  - `en` 可省略 → 英文模式下自動退回 `zh`；中英相同時分類標題不重複顯示英文副名
+  - `orderUrl`（選填）：檔口自己的點餐站 → 分類標題列多一顆「網上點餐 ↗」膠囊
+- `dishes`: `{ id, uni, canteenId, cat, zh, en?, price, photo?, descZh?, descEn?, tags? }`
+  - `tags`: `signature`（招牌）／`spicy`（辣）／`value`（抵食）／`sweet`（甜）
+  - `id` 全站唯一；新校建議加校名前綴（`polyu-…`、`hku-…`）
+
+---
+
+## 已封存的示範資料
+
+`js/data/archive/` 裡有兩個**沒有被載入**的舊資料檔：
+
+| 檔案 | 內容 | 性質 |
+|---|---|---|
+| `polyu.js` | PolyU 3 間食堂／48 道 | ⚠️ 虛構示範資料 |
+| `hkbu.js` | HKBU 1,689 道 | 真實抄錄，但已不在站上 |
+
+要恢復就把檔案移回 `js/data/`，並在 `js/data/index.js` 的 `SOURCES` 與 `index.html` 補回對應行。
+若要走資料庫（建議），用 `work/gen_multi_sql.cjs` 產生 SQL 灌進去即可。
+
+HKU 原本也有兩間同樣性質的示範食堂（學生會食堂、Global Café，共 30 道），已於 2026-10-31 刪除。
+
+---
+
+## HKBU 菜單怎麼來的
+
+菜單**不是**手抄的，是從浸大官方**線上點餐平台**（後端 `api.aigens.com`）爬下來的：
+
+| 餐飲點 | 點餐平台 | 菜色數 |
+|---|---|---|
+| Main Canteen（浸大校園餐廳） | <https://csd2.order.place/store/112867> | 134 |
+| Harmony Cafeteria | <https://food.order.place/home/store/5768631610769408> | 1555 |
+
+重跑爬蟲（會重新生成 `js/data/hkbu.js`）：
 
 ```bash
-curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
-  (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" \
-  "https://api.aigens.com/api/v1/menu/store/312882.json?menu=kiosk"
+python .crawl/extract_hkbu.py     # 抓 API → hkbu-menus.json
+python .crawl/gen_hkbu_js.py      # hkbu-menus.json → js/data/hkbu.js
 ```
 
-- ⚠️ **必須帶瀏覽器 UA**，否則回 404（不帶 UA 會被當成爬蟲擋掉）。
-- `312882` = **西北麵館**（四季茶坊的飲品也掛在這間店的菜單下，但四季茶坊本身沒有獨立點餐店）；`212882` = 餃餃陣；`112882` = AC2 食堂本體（兩個檔口共用它的分類）。
-- `menu=kiosk` 才是完整菜單；`menu=dinein` 只給時段菜單。
-- 菜品圖在 `images.default.url`（`content.aigens.com`，**600×600 正方形**，可直接 `object-fit:cover` 裁成 4:3）。
-- 分類名只有英文（`name`），中文要自己對應。
-
-實作範例見 `dev/2026-10-15-ac2-drinks-teahouse/build.py`（下載圖 + 生成 SQL 一次做完）。
+> ⚠️ **只收「線上點餐平台」的資料**。其餘 11 個餐飲點（Nan Yuan、iCafe、Bistro NTT、Deli…）
+> 官方只提供 PDF／圖片菜單，依指示暫不採用，**先留空待補**（網站會顯示「菜單尚未收錄」）。
+> ⚠️ 爬蟲過濾了兩類非菜色項：`price = 0` 的餐內選項，與名稱以 `+`／`額外` 開頭的加購項；
+> ⚠️ HKBU 舊快照有 15 組「同一菜名出現在兩間食堂」而共用 `id`（`dishById` 取第一筆），
+> 這是既有問題，尚未修。
 
 ---
 
-## 本機預覽 Run locally
-
-`file://` 直接開 `index.html` 也能看，但 Supabase 載入與 `localStorage` 在某些瀏覽器會有跨來源限制，建議起一個簡單的靜態伺服器：
+## 本地預覽
 
 ```bash
-# Python
-python -m http.server 8000
-
-# 或 Node
-npx serve .
+python -m http.server 8000     # 或 npx serve .
 ```
 
-然後開 <http://localhost:8000>。
+然後打開 <http://localhost:8000>。
 
 ---
 
-## 部署 Deploy
+## 設計系統（v1.4.0）
 
-純靜態、無建置步驟，任何靜態主機都能直接用：
+### 配色三層
 
-- **GitHub Pages** — Settings → Pages → Source 選 `main` 分支 `/ (root)`
-- **Netlify / Vercel / Cloudflare Pages** — 直接連這個 repo，不用填 build command
+| 層 | 只管什麼 | 值 |
+|---|---|---|
+| 品牌紅 | **動作**：主按鈕、focus ring、文字選取、避雷面板 | `--red #CE2F1F` / `--red-deep #A82718` |
+| 校色 | **身份**：頁首圓點、麵包屑校名、大學卡、食堂卡 hover 邊框、hero 色塊 | `--uni-<id>`，由 `applyUniTheme()` 掛上 `:root` |
+| 中性 | **紙張與墨**：白 → 兩層暖灰 → 墨黑 | `--bg / --soft / --tile / --line / --meta / --text-2 / --ink` |
+
+兩條禁令：
+
+- 校色**不壓在小字上**（它的明度只夠撐白字與大片色塊）；
+- 校色**不用於按鈕**（否則「紅色按鈕」在 CityU 頁會被誤讀成校色，使用者分不清哪個是可點的）。
+
+四校校色與白字對比：
+
+| 大學 | 值 | 白字對比 |
+|---|---|---|
+| CityU | `#A81E32` 酒紅 | 7.25:1 |
+| PolyU | `#8C5A1B` 磚金 | 5.85:1 |
+| HKBU | `#23507F` 校藍 | 8.31:1 |
+| HKU | `#1C6A4E` 墨綠 | 6.52:1 |
+
+> CityU 官方紅本來就深，要拉成酒紅才跟品牌紅分得開；PolyU 官方也是紅，改用它紅磚校園的磚金，
+> 兩校才不會撞色。
+
+### 動效
+
+只有四個 authored moment，其餘一律不加：
+
+1. **路由切換**：`::view-transition-old/new(root)`，舊畫面 260ms 向上淡出、新畫面 420ms 淡入（退場比進場快，不留鬼影）。
+2. **數字滾動**：首頁統計從 0 數上去，ease-out cubic 820ms，四張卡錯開 70ms。
+3. **大學卡微傾斜**：`pointermove` → rAF 節流 → `rotateX/Y ≤5°`，只掛在 `(hover:hover) and (pointer:fine)`。
+4. **照片擦開**：校園照 `clip-path: inset(0 0 9% 0)`，`.in` 時歸零，980ms。
+
+`prefers-reduced-motion` 下全部中和，照片直接給完整狀態（不會停在裁掉 9% 的樣子）。
+照片本身**不做 hover 縮放** —— 回饋交給卡片上浮與校色邊框。
 
 ---
 
-## 客製化 Customisation
+## 版本號
 
-| 想改什麼 | 改哪裡 |
-|---|---|
-| 介面文案（中英） | `js/i18n.js` |
-| 版本號（同時刷新快取） | `js/config.js` 的 `VERSION` + `index.html` 裡的 `?v=` 查詢字串 |
-| 食堂介紹、菜名、價錢 | **Supabase `canteens` / `dishes` 表**（不是在 `menu-data.js`） |
-| 某個分類屬於哪個餐段 | **Supabase `categories.meal`** |
-| 哪個檔口可以網上點餐 | **Supabase `categories.order_url`**（留空＝不顯示按鈕） |
-| 食堂本身的官方下單連結 | **Supabase `canteens.order_url`** |
-| 抽籤要排除哪些菜品／分類 | **Supabase `roll_blacklist` 表**（刪光＝不排除） |
-| 是否顯示範例評論 | `js/config.js` 的 `HIDE_SAMPLES` |
-| 配色與動效 | `css/style.css` 最上方的 CSS 變數 |
+改版時同時改 `js/config.js` 的 `VERSION` ＋ `index.html` 全部 `?v=`（共 **10 處**：1 個 CSS ＋ 9 個 JS）。
+資料結構有變時記得一併考慮 `localStorage` 的舊鍵要不要換。
+
+目前版本：**2.1.2**（2026-11-01）
 
 ---
 
-## 授權 License
+## 版權與免責
 
-程式碼採用 [MIT License](LICENSE)。
-
-菜品照片版權屬原拍攝者／原網站所有，僅作學術與非商業展示用途。食堂資訊請以 [CityU 官方餐飲頁面](https://www.cityu.edu.hk/zh-hk/directories/catering) 及現場公告為準。
+- 程式碼 MIT License。
+- 菜品照片版權屬原拍攝者／原網站所有，僅作學術與非商業展示。
+  **HKU CYM 與黃克競食堂的菜品照**取自該校官方點餐系統（`now.order.place` / Aigens）的公開圖片 CDN。
+- **首頁大學卡照片來自 Wikimedia Commons**（CC BY-SA 2.0 / 3.0 / 4.0），
+  作者與授權記在各校 `universities[].photoCredit`，需要標示時從那裡取。
+- 非官方網站，與任何院校無從屬關係；價錢與供應以食堂現場為準。

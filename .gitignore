@@ -17,6 +17,9 @@ tmp/
 .motion-check/
 *.local.*
 
+# 爬蟲暫存（原始 JSON、下載檔、瀏覽器 profile、爬蟲腳本）
+.crawl/
+
 # 環境變數（本專案不需要，但避免日後誤放金鑰）
 .env
 .env.*

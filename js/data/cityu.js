@@ -29,7 +29,7 @@ window.EATY_DATA_CITYU = {
       hoursZh: '週一至五 07:30–20:00・週六至日 08:00–18:00（公眾假期休息）',
       hoursEn: 'Mon–Fri 07:30–20:00 · Sat–Sun 08:00–18:00 (PH closed)',
       color: 'ac1',
-      photo: 'assets/ac1/cover.jpg',
+      photo: 'assets/ac1/store.jpg',
       orderUrl: 'https://csd.order.place/home/store/112870',
       factZh: '三大食堂中唯一設有官方網上點餐，車仔麵、燒味、日式丼飯一應俱全。',
       factEn: 'The only canteen with official online ordering — roast meats, noodles, donburi and more.',

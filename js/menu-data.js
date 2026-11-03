@@ -48,7 +48,10 @@
       meal: parseMeal(r.meal),
       // 檔口（＝分類）自己的官方點餐連結，選填。有值時食堂頁的分類標題列會多一顆
       // 「網上點餐 ↗」膠囊（AC2 的西北麵館／餃餃陣就是這種：食堂沒有總站，檔口各自有）。
-      orderUrl: r.orderUrl || '',
+      // 兩種來源欄位名都要吃：雲端 Supabase 是蛇形 order_url，
+      // 本地回退 js/data/*.js 是駝峰 orderUrl。只認一種就會靜默丟連結
+      // （v2.2.2 前只寫 r.orderUrl → AC2 的西北麵館／餃餃陣在線上整個消失）。
+      orderUrl: r.order_url || r.orderUrl || '',
     };
   }
 
@@ -132,7 +135,8 @@
       hoursZh: r.hours_zh || '', hoursEn: r.hours_en || '',
       factZh: r.fact_zh || '', factEn: r.fact_en || '',
       color: r.color || r.id, photo: r.photo || '',
-      orderUrl: r.order_url || null,
+      // 同 normalizeCategory：雲端蛇形、本地駝峰，兩種都認
+      orderUrl: r.order_url || r.orderUrl || null,
     };
   }
   function normalizeDish(r) {
